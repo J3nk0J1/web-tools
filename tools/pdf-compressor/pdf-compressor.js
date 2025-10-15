@@ -18,7 +18,15 @@
   const qualityInput=document.getElementById('quality');
   const qualityLabel=document.getElementById('qualityLabel');
   const downscaleInput=document.getElementById('downscale');
+  const qualityNotice=document.getElementById('qualityNotice');
+  const errorBanner=document.getElementById('errorBanner');
   const outputTypeRadios=Array.from(document.querySelectorAll('input[name="outputType"]'));
+
+  const defaultNotice='Adjust DPI, JPEG quality and maximum page size to balance clarity and size for everyday use.';
+  const naaNotice='NAA archival standard uses locked settings: 300 dpi, JPEG quality 90, and no resizing. These match the preservation rules required by the Act.';
+  const naaSettings={ dpi:'300', quality:'90', downscale:'0' };
+  const initialManualSettings={ dpi:dpiInput.value, quality:qualityInput.value, downscale:downscaleInput.value };
+  let manualSettings={ ...initialManualSettings };
 
   document.getElementById('backToDashboard')?.addEventListener('click',()=>{ window.location.href='../../index.html'; });
 
@@ -44,10 +52,14 @@
   dropzone.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); } });
 
   dpiInput.addEventListener('input',()=>{ dpiLabel.textContent=dpiInput.value; });
+  dpiInput.addEventListener('change',rememberManualSettings);
   qualityInput.addEventListener('input',()=>{ qualityLabel.textContent=qualityInput.value; });
+  qualityInput.addEventListener('change',rememberManualSettings);
+  downscaleInput.addEventListener('change',rememberManualSettings);
 
   generateBtn.addEventListener('click',async ()=>{
-    if(!currentFile){ alert('Select a PDF first.'); return; }
+    if(!currentFile){ showError('Please select a PDF before generating an output.'); return; }
+    clearError();
     await runCompression();
   });
 
@@ -59,7 +71,10 @@
     dropzone.querySelector('p').textContent='Drag & drop a PDF here, or';
     inputMeta.textContent=''; generateBtn.disabled=true; downloadBtn.disabled=true;
     progressBar.style.width='0%'; progressStatus.textContent='Waiting…'; stats.innerHTML='';
+    manualSettings={ ...initialManualSettings };
+    outputTypeRadios.forEach(radio=>{ radio.checked=radio.value==='access'; });
     updateActionLabels();
+    clearError();
   });
 
   async function runCompression(){
@@ -89,9 +104,10 @@
         <div><strong>Compression result:</strong> ${reductionText}</div>
         <div><strong>Compliance:</strong> ${complianceLabel}</div>`;
       progressStatus.textContent='Ready to download.';
+      clearError();
     }catch(err){
       console.error(err);
-      alert('Unable to compress this PDF. Details in the console.');
+      showError('We could not compress this PDF. The file may be protected or use features we do not support yet. Please try another file or check with the records team.');
       progressStatus.textContent='Processing failed.';
     }finally{
       generateBtn.disabled=false;
@@ -99,7 +115,7 @@
   }
 
   function acceptFile(file){
-    if(file.type!=='application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ alert('Please choose a PDF file.'); return; }
+    if(file.type!=='application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ showError('This tool only works with PDF files. Please choose a PDF document.'); fileInput.value=''; return; }
     currentFile=file; outputBlob=null; outputName='';
     const meta=`Selected: ${file.name} • ${formatBytes(file.size)} • Last modified ${formatDate(file.lastModified||Date.now())}`;
     inputMeta.textContent=meta;
@@ -107,6 +123,7 @@
     panelSettings.hidden=false; panelProgress.hidden=true; panelResults.hidden=true;
     generateBtn.disabled=false; downloadBtn.disabled=true; stats.innerHTML=''; progressStatus.textContent='Waiting…'; progressBar.style.width='0%';
     updateActionLabels();
+    clearError();
   }
 
   async function compressDocument(file,options,mode,progressCb){
@@ -249,6 +266,7 @@
 
   function updateActionLabels(){
     const mode=getOutputMode();
+    syncQualityControls(mode);
     if(mode==='pdfa'){
       generateBtn.textContent='Generate PDF/A-2b file';
       downloadBtn.textContent='Download PDF/A';
@@ -256,6 +274,47 @@
       generateBtn.textContent='Generate access copy';
       downloadBtn.textContent='Download PDF';
     }
+  }
+
+  function syncQualityControls(mode){
+    if(mode==='pdfa'){
+      rememberManualSettings();
+      dpiInput.value=naaSettings.dpi;
+      qualityInput.value=naaSettings.quality;
+      downscaleInput.value=naaSettings.downscale;
+      dpiInput.disabled=true;
+      qualityInput.disabled=true;
+      downscaleInput.disabled=true;
+      if(qualityNotice){ qualityNotice.textContent=naaNotice; }
+    }else{
+      dpiInput.disabled=false;
+      qualityInput.disabled=false;
+      downscaleInput.disabled=false;
+      if(manualSettings.dpi) dpiInput.value=manualSettings.dpi;
+      if(manualSettings.quality) qualityInput.value=manualSettings.quality;
+      if(typeof manualSettings.downscale!=='undefined') downscaleInput.value=manualSettings.downscale;
+      if(qualityNotice){ qualityNotice.textContent=defaultNotice; }
+    }
+    dpiLabel.textContent=dpiInput.value;
+    qualityLabel.textContent=qualityInput.value;
+  }
+
+  function rememberManualSettings(){
+    if(dpiInput.disabled||qualityInput.disabled||downscaleInput.disabled) return;
+    manualSettings={ dpi:dpiInput.value, quality:qualityInput.value, downscale:downscaleInput.value };
+  }
+
+  function showError(message){
+    if(!errorBanner) return;
+    if(!message){ clearError(); return; }
+    errorBanner.textContent=message;
+    errorBanner.setAttribute('aria-hidden','false');
+  }
+
+  function clearError(){
+    if(!errorBanner) return;
+    errorBanner.textContent='';
+    errorBanner.setAttribute('aria-hidden','true');
   }
 
   function base64ToUint8(base64){

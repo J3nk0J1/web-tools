@@ -20,6 +20,12 @@
     .badge { display:inline-flex; align-items:center; gap:6px; background:color-mix(in oklab, var(--primary) 18%, transparent); color:var(--primary); border-radius:999px; padding:4px 10px; font-size:.85rem; font-weight:600; }
     .option-radio { display:flex; gap:8px; align-items:flex-start; }
     .option-radio input { margin-top:4px; }
+    .steps { margin:0; padding-left:20px; display:grid; gap:6px; }
+    .steps li { font-weight:500; }
+    .callout { border-radius:12px; border:1px solid color-mix(in oklab, var(--primary) 40%, transparent); background:color-mix(in oklab, var(--primary) 12%, transparent); padding:12px 14px; }
+    .callout strong { color:var(--primary); }
+    .error-banner { display:none; margin:16px auto 0; max-width:1100px; background:color-mix(in oklab, var(--error) 18%, transparent); color:var(--error); border:1px solid color-mix(in oklab, var(--error) 40%, transparent); border-radius:12px; padding:12px 16px; box-shadow:var(--shadow-1); }
+    .error-banner[aria-hidden="false"] { display:block; }
   </style>
 </head>
 <body>
@@ -34,21 +40,36 @@
       <h1 class="app-title">Offline PDF Compressor</h1>
     </div>
     <div class="app-bar__right">
-      <span class="badge" aria-hidden="true">ZIP + JPEG only</span>
       <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
         <span class="icon" id="themeIcon" aria-hidden="true"></span>
       </button>
     </div>
   </header>
 
+  <div id="errorBanner" class="error-banner" role="alert" aria-hidden="true"></div>
+
   <aside class="warning" role="note" aria-live="polite">
-    <strong>⚠️ Offline only:</strong> Files never leave this workstation. All processing happens locally in your browser.
+    <p><strong>⚠️ Important:</strong> This tool is provided as is without warranty or support. Do not contact the ICT service desk; no support will be offered.</p>
+    <p><strong>Offline only:</strong> Files never leave this workstation. All processing happens locally in your browser.</p>
   </aside>
 
   <main class="tool-content" role="main">
+    <section class="panel" aria-labelledby="overview-title" id="panel-overview">
+      <h2 id="overview-title">How to use this tool</h2>
+      <p class="meta">This workflow trims PDFs for easy sharing while staying on your computer. Follow the three steps below.</p>
+      <ol class="steps">
+        <li><strong>Step 1:</strong> Add the PDF you want to shrink.</li>
+        <li><strong>Step 2:</strong> Decide whether you need an everyday copy or the National Archives (NAA) archival standard.</li>
+        <li><strong>Step 3:</strong> Download the lighter file once processing finishes.</li>
+      </ol>
+      <div class="callout" role="note">
+        <strong>About the National Archives Act (NAA):</strong> This Australian law makes sure government records are preserved and easy to find for future generations. Choosing the NAA archival option automatically applies the preservation settings that meet these obligations.
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="upload-title" id="panel-upload">
-      <h2 id="upload-title">Select a PDF</h2>
-      <p class="meta">Accepted input: PDF 1.2–2.0. Output choices include an access copy or an archival PDF/A-2b derivative that aligns with the National Archives of Australia guidance.</p>
+      <h2 id="upload-title">Step 1 – Select a PDF</h2>
+      <p class="meta">Pick any PDF version 1.2–2.0. Everything stays in the browser – no files are uploaded.</p>
       <div id="dropzone" class="dropzone" tabindex="0">
         <p>Drag &amp; drop a PDF here, or</p>
         <button id="chooseFileBtn" class="btn" type="button" data-ripple>Choose file</button>
@@ -57,30 +78,30 @@
     </section>
 
     <section class="panel" aria-labelledby="settings-title" id="panel-settings" hidden>
-      <h2 id="settings-title">Compression settings</h2>
+      <h2 id="settings-title">Step 2 – Pick the output</h2>
       <p class="meta" id="inputMeta"></p>
       <div class="options-grid">
         <fieldset class="field">
           <legend>Output format</legend>
-          <div class="meta">Use an access copy for everyday work-in-progress. Switch to PDF/A-2b when producing final or archival versions that must remain readable long term.</div>
+          <div class="meta">Use an access copy for day-to-day collaboration. Switch to the archival choice when submitting records that must stay readable for decades.</div>
           <label class="meta option-radio">
             <input type="radio" name="outputType" value="access" checked />
-            <span><strong>Access copy</strong> — PDF 1.7 with ZIP structure streams and baseline JPEG imagery (no OCR layer).</span>
+            <span><strong>Access copy</strong> — Great for email and drafts. Keeps image quality while reducing the file size.</span>
           </label>
           <label class="meta option-radio">
             <input type="radio" name="outputType" value="pdfa" />
-            <span><strong>Archival copy (PDF/A-2b)</strong> — embeds mandatory metadata, sRGB output intent, and is suitable for final submissions to NAA.</span>
+            <span><strong>Archival copy (PDF/A-2b)</strong> — Required for National Archives submissions. Metadata and colour settings are handled for you.</span>
           </label>
         </fieldset>
         <div class="field">
           <label for="dpi">Rasterisation DPI</label>
           <input id="dpi" type="range" min="72" max="300" step="6" value="150" />
-          <div class="meta">Current: <span id="dpiLabel">150</span> dpi. Balances fidelity and file size. Higher DPI increases clarity and output size.</div>
+          <div class="meta">Current: <span id="dpiLabel">150</span> dpi. Higher numbers are sharper but larger.</div>
         </div>
         <div class="field">
           <label for="quality">JPEG quality</label>
           <input id="quality" type="range" min="60" max="100" step="5" value="85" />
-          <div class="meta">Current: <span id="qualityLabel">85</span>. Uses baseline JPEG (PDF/A-safe). Recommended 80–90 for access derivatives.</div>
+          <div class="meta">Current: <span id="qualityLabel">85</span>. Higher values keep more detail at the cost of a bigger file.</div>
         </div>
         <div class="field">
           <label for="downscale">Max long edge (pixels)</label>
@@ -88,26 +109,27 @@
           <div class="meta">Optional. Pages larger than this will be proportionally reduced before encoding.</div>
         </div>
       </div>
+      <p class="meta" id="qualityNotice">Adjust DPI, JPEG quality and maximum page size to balance clarity and size for everyday use.</p>
       <div class="actions">
         <button id="generateBtn" class="btn" data-ripple>Generate output</button>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="progress-title" id="panel-progress" hidden>
-      <h2 id="progress-title">Processing</h2>
-      <p class="meta" id="progressStatus">Waiting…</p>
+      <h2 id="progress-title">Step 3 – Processing</h2>
+      <p class="meta" id="progressStatus" role="status">Waiting…</p>
       <div class="progress" aria-hidden="true"><div class="progress__bar" id="progressBar"></div></div>
     </section>
 
     <section class="panel" aria-labelledby="results-title" id="panel-results" hidden>
-      <h2 id="results-title">Results</h2>
+      <h2 id="results-title">Step 4 – Download</h2>
       <div class="results">
         <div class="stats" id="stats"></div>
         <div class="actions">
           <button id="downloadBtn" class="btn" data-ripple disabled>Download</button>
           <button id="resetBtn" class="btn btn--secondary" data-ripple>Start over</button>
         </div>
-        <p class="hint">Outputs use ZIP streams for structure and baseline JPEG for imagery. LZW compression is never used. OCR text layers are not generated by this tool.</p>
+        <p class="hint">Behind the scenes the file keeps the ZIP and JPEG formats recommended by our records team. Text recognition (OCR) is not added.</p>
       </div>
     </section>
   </main>
