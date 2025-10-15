@@ -23,31 +23,9 @@
     .editor-line-numbers{margin:0;min-width:3.25rem;padding:14px 8px 14px 12px;font-size:.82rem;line-height:1.4;text-align:right;color:var(--text-muted);background:color-mix(in oklab, var(--surface) 84%, transparent);border-right:1px solid color-mix(in oklab, var(--divider) 70%, transparent);overflow:hidden;border-radius:0 0 0 14px;height:100%}
     .editor-textarea{width:100%;height:100%;padding:14px 16px;font-size:.9rem;line-height:1.4;border:0;resize:none;background:transparent;color:inherit;overflow:auto}
     .editor-textarea:focus{outline:none;box-shadow:none}
-    .validation-deck{margin-bottom:20px;padding:16px;border-radius:14px;border:1px solid var(--divider);background:color-mix(in oklab, var(--surface) 92%, transparent);box-shadow:var(--shadow-1)}
-    .validation-deck header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .validation-deck h3{margin:0;font-size:1rem}
-    .status-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
-    .summary-card{border:1px solid var(--divider);border-radius:12px;padding:12px 14px;display:grid;gap:6px;background:color-mix(in oklab, var(--surface) 80%, transparent);transition:border-color .2s ease,background .2s ease}
-    .summary-card h4{margin:0;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted)}
-    .summary-status{font-weight:700;font-size:1rem;margin:0}
-    .summary-detail{margin:0;font-size:.85rem;color:var(--text-muted)}
-    .summary-card.ok{border-color:color-mix(in oklab, var(--success) 45%, var(--divider));background:color-mix(in oklab, var(--success) 18%, transparent)}
-    .summary-card.warn{border-color:color-mix(in oklab, var(--warning-text) 45%, var(--divider));background:color-mix(in oklab, var(--warning-bg) 55%, transparent)}
-    .summary-card.error{border-color:color-mix(in oklab, var(--error) 55%, var(--divider));background:color-mix(in oklab, var(--error) 18%, transparent)}
-    .status-details{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
-    .status-item{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:start;padding:12px;border-radius:10px;border:1px solid var(--divider);background:color-mix(in oklab, var(--surface) 86%, transparent)}
-    .status-item.warn{border-color:color-mix(in oklab, var(--warning-text) 45%, var(--divider));background:color-mix(in oklab, var(--warning-bg) 50%, transparent)}
-    .status-item.error{border-color:color-mix(in oklab, var(--error) 55%, var(--divider));background:color-mix(in oklab, var(--error) 18%, transparent)}
-    .status-icon{font-size:1.1rem;line-height:1;grid-row:1 / span 2}
-    .status-item.warn .status-icon{color:var(--warning-text)}
-    .status-item.error .status-icon{color:var(--error)}
-    .status-label{font-weight:700;font-size:.95rem;grid-column:2}
-    .status-message{font-size:.9rem;line-height:1.3;grid-column:2}
-    .status-detail{grid-column:1 / -1;font-family:"Fira Code",Consolas,"SFMono-Regular",Menlo,monospace;font-size:.82rem;background:color-mix(in oklab, var(--surface) 94%, transparent);padding:6px 8px;border-radius:8px;border:1px dashed color-mix(in oklab, var(--divider) 65%, transparent);word-break:break-word}
-    .status-empty{margin:0;font-size:.9rem;color:var(--text-muted);padding:12px;border-radius:10px;border:1px dashed var(--divider);text-align:center}
-    .preview-shell{background:var(--surface);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow-1);overflow:hidden;min-height:360px}
+    .preview-shell{background:var(--surface);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow-1);overflow:hidden;min-height:420px;display:flex;flex-direction:column}
     .preview-shell header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--divider)}
-    .preview-shell iframe{width:100%;height:calc(100% - 50px);border:0;background:white}
+    .preview-shell iframe{flex:1;width:100%;border:0;background:white}
     @media (min-width:1024px){
       .editor-stack{gap:14px}
       .preview-shell{min-height:420px}
@@ -84,31 +62,7 @@
   <main class="tool-content" role="main">
     <section class="panel" aria-labelledby="code-editors-heading">
       <h2 id="code-editors-heading">HTML, CSS &amp; JavaScript editors</h2>
-      <p class="meta">Edit each language in the panels below. Updates are applied automatically with a live preview and quick syntax validation to flag basic issues.</p>
-      <div class="validation-deck" aria-live="polite" aria-atomic="true" aria-labelledby="validationHeading">
-        <header>
-          <h3 id="validationHeading">Validation overview</h3>
-          <p class="meta" style="margin:0">Live status for each language and detailed feedback below.</p>
-        </header>
-        <div class="status-summary" id="statusSummary" role="group" aria-label="Language validation status">
-          <article class="summary-card ok" data-lang="html">
-            <h4>HTML</h4>
-            <p class="summary-status">Ready</p>
-            <p class="summary-detail">All checks passed.</p>
-          </article>
-          <article class="summary-card ok" data-lang="css">
-            <h4>CSS</h4>
-            <p class="summary-status">Ready</p>
-            <p class="summary-detail">All checks passed.</p>
-          </article>
-          <article class="summary-card ok" data-lang="js">
-            <h4>JavaScript</h4>
-            <p class="summary-status">Ready</p>
-            <p class="summary-detail">All checks passed.</p>
-          </article>
-        </div>
-        <ul class="status-details" id="statusDetails" role="list"></ul>
-      </div>
+      <p class="meta">Edit the panels below to update the live preview instantly. CSS and JavaScript panels stay tucked away until you need them to keep the workspace focused.</p>
       <div class="workspace">
         <div class="editor-column">
           <div class="editor-stack">
