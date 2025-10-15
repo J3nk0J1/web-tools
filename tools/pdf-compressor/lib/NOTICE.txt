@@ -1,0 +1,6 @@
+This directory bundles third-party libraries for offline use:
+
+- pdf.js (pdfjs-dist v3.11.174) — Copyright (c) 2012 Mozilla Foundation, released under the Apache License 2.0.
+- pdf-lib (v1.17.1) — Copyright (c) 2017 James W. M. Smith, released under the MIT License.
+
+Full license texts are available from the respective project repositories.
