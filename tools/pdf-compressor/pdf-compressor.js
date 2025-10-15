@@ -27,6 +27,11 @@
   const progressActions=document.getElementById('progressActions');
   const outputTypeRadios=Array.from(document.querySelectorAll('input[name="outputType"]'));
 
+  const PAGE_YIELD_INTERVAL = 1;
+  async function yieldToBrowser(){
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
+
   const defaultNotice='Adjust DPI, JPEG quality and maximum page size to balance clarity and size for everyday use.';
   const accessNotice='Access copy uses recommended settings tuned for day-to-day sharing. Switch to Custom to adjust them.';
   const naaNotice='NAA archival standard uses locked settings: 300 dpi, JPEG quality 90, and no resizing. These match the preservation rules required by the Act.';
@@ -95,12 +100,11 @@
     const dpi=clamp(parseInt(dpiInput.value,10)||150,72,600);
     const quality=clamp(parseInt(qualityInput.value,10)||85,40,100)/100;
     const downscaleVal=Math.max(0,parseInt(downscaleInput.value,10)||0);
-    const maxEdgeLabel=downscaleVal>0?`${downscaleVal}px`:'not limited';
     const mode=getOutputMode();
 
     try{
       updateProgress(0,1,'Preparing…');
-      const {blob,pageCount,originalBytes,outputBytes,fileSuffix,complianceLabel} = await compressDocument(currentFile,{dpi,quality,downscale:downscaleVal},mode,updateProgress);
+      const {blob,pageCount,originalBytes,outputBytes,fileSuffix,complianceLabel,usedOptions,sizeGuardApplied} = await compressDocument(currentFile,{dpi,quality,downscale:downscaleVal},mode,updateProgress);
       outputBlob=blob;
       const safeBase=deriveBaseName(currentFile.name||'document');
       outputName=`${safeBase}-${fileSuffix}.pdf`;
@@ -108,19 +112,28 @@
       goToStep(4);
       const reduction=originalBytes>0?((1-(outputBytes/originalBytes))*100):0;
       const reductionText=reduction>=0?`${reduction.toFixed(1)}% reduction`:`${Math.abs(reduction).toFixed(1)}% increase`;
+      const appliedOptions=usedOptions||{ dpi, quality, downscale:downscaleVal };
+      const usedDpi=Math.round(appliedOptions.dpi||dpi);
+      const usedQuality=(appliedOptions.quality||quality)*100;
+      const usedMaxEdge=appliedOptions.downscale>0?`${appliedOptions.downscale}px`:'not limited';
       stats.innerHTML=`
         <div><strong>Input:</strong> ${currentFile.name} • ${formatBytes(originalBytes)}</div>
         <div><strong>Output:</strong> ${outputName} • ${formatBytes(outputBytes)}</div>
         <div><strong>Pages processed:</strong> ${pageCount}</div>
-        <div><strong>Settings:</strong> ${Math.round(dpi)} dpi rasterisation • JPEG quality ${(quality*100).toFixed(0)} • Max edge ${maxEdgeLabel}</div>
+        <div><strong>Settings:</strong> ${usedDpi} dpi rasterisation • JPEG quality ${usedQuality.toFixed(0)} • Max edge ${usedMaxEdge}</div>
         <div><strong>Compression result:</strong> ${reductionText}</div>
-        <div><strong>Compliance:</strong> ${complianceLabel}</div>`;
+        <div><strong>Compliance:</strong> ${complianceLabel}</div>${sizeGuardApplied?'<div><strong>Note:</strong> Archival guard lowered DPI/quality automatically to prevent file bloat.</div>':''}`;
       progressStatus.textContent='Ready to download.';
       clearError();
       requestAnimationFrame(()=>{ panelResults?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     }catch(err){
       console.error(err);
-      showError('We could not compress this PDF. The file may be protected or use features we do not support yet. Please try another file or check with the records team.');
+      let message='We could not compress this PDF. The file may be protected or use features we do not support yet. Please try another file or check with the records team.';
+      if(err && typeof err.message==='string'){
+        if(err.code==='PASSWORD'){ message='This PDF is password protected. Please unlock it before generating a new copy.'; }
+        else if(err.code==='UNSUPPORTED'){ message='This PDF uses features we cannot process offline. Try exporting a simpler copy or flattening complex elements.'; }
+      }
+      showError(message);
       progressStatus.textContent='Processing failed.';
       goToStep(3);
     }finally{
@@ -143,8 +156,24 @@
   async function compressDocument(file,options,mode,progressCb){
     const arrayBuffer=await file.arrayBuffer();
     const loadingTask=pdfjsLib.getDocument({ data:arrayBuffer, useSystemFonts:true, disableFontFace:false });
+    let pdf;
     try{
-      const pdf=await loadingTask.promise;
+      pdf=await loadingTask.promise;
+    }catch(error){
+      await loadingTask.destroy();
+      if(error && (error.name==='PasswordException' || /Password/i.test(error.message||''))){
+        const err=new Error('Password protected PDF');
+        err.code='PASSWORD';
+        throw err;
+      }
+      if(error && (error.name==='InvalidPDFException' || error.name==='MissingPDFException')){
+        const err=new Error('Unsupported or corrupted PDF');
+        err.code='UNSUPPORTED';
+        throw err;
+      }
+      throw error instanceof Error?error:new Error('Unable to read PDF');
+    }
+    try{
       const { PDFDocument, PDFName, PDFString } = PDFLib;
       const pdfDoc=await PDFDocument.create();
       pdfDoc.catalog.set(PDFName.of('Version'), PDFName.of('1.7'));
@@ -158,6 +187,8 @@
 
       let complianceLabel='PDF 1.7 access derivative — baseline JPEG imagery, ZIP structure streams, offline processing (aligns with NAA access copy guidance)';
       let fileSuffix='access';
+      const effectiveOptions={ ...options };
+      let sizeGuardApplied=false;
 
       if(mode==='pdfa'){
         pdfDoc.setTitle(`${titleBase} (PDF/A-2b)`);
@@ -191,6 +222,12 @@
         pdfDoc.catalog.set(PDFName.of('OutputIntents'), pdfDoc.context.obj([outputIntent]));
         complianceLabel='PDF/A-2b archival derivative — sRGB output intent, ZIP structure streams, baseline JPEG imagery, no LZW (complies with NAA long-term guidance)';
         fileSuffix='pdfa2b';
+        const bytesPerPage=arrayBuffer.byteLength/Math.max(1,pdf.numPages);
+        if(bytesPerPage<350000){
+          sizeGuardApplied=true;
+          effectiveOptions.dpi=Math.min(options.dpi,260);
+          effectiveOptions.quality=Math.min(options.quality,0.82);
+        }
       }else if(mode==='custom'){
         pdfDoc.setTitle(`${titleBase} (Custom derivative)`);
         pdfDoc.setSubject('Custom compressed derivative');
@@ -201,17 +238,26 @@
         pdfDoc.setTitle(`${titleBase} (Access copy)`);
         pdfDoc.setSubject('Compressed access derivative');
         pdfDoc.setKeywords(['PDF','Compression','Offline Access']);
+        if(!options.downscale){
+          const bytesPerPage=arrayBuffer.byteLength/Math.max(1,pdf.numPages);
+          if(bytesPerPage<200000){
+            effectiveOptions.downscale=3200;
+          }
+        }
       }
 
-      const pages=pdf.numPages; const baseScale=options.dpi/72;
+      const pages=pdf.numPages; const baseScale=effectiveOptions.dpi/72;
+      if(sizeGuardApplied){
+        progressCb?.({current:0,total:pages,message:'Applying archival size guard…'});
+      }
       for(let i=1;i<=pages;i++){
         progressCb?.({current:i-1,total:pages,message:`Rendering page ${i} of ${pages}…`});
         const page=await pdf.getPage(i);
         const baseViewport=page.getViewport({ scale:1 });
         const baseWidth=baseViewport.width; const baseHeight=baseViewport.height;
         let scale=baseScale; let renderWidth=Math.round(baseWidth*scale); let renderHeight=Math.round(baseHeight*scale);
-        if(options.downscale>0 && Math.max(renderWidth,renderHeight)>options.downscale){
-          const ratio=options.downscale/Math.max(renderWidth,renderHeight);
+        if(effectiveOptions.downscale>0 && Math.max(renderWidth,renderHeight)>effectiveOptions.downscale){
+          const ratio=effectiveOptions.downscale/Math.max(renderWidth,renderHeight);
           scale*=ratio; renderWidth=Math.max(1,Math.round(baseWidth*scale)); renderHeight=Math.max(1,Math.round(baseHeight*scale));
         }
         const viewport=page.getViewport({ scale });
@@ -220,19 +266,25 @@
         ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
         const renderTask=page.render({ canvasContext:ctx, viewport });
         await renderTask.promise;
-        progressCb?.({current:i-1+0.6,total:pages,message:`Encoding page ${i}…`});
-        const dataUrl=canvas.toDataURL('image/jpeg',options.quality);
-        const jpgBytes=new Uint8Array(await (await fetch(dataUrl)).arrayBuffer());
+        progressCb?.({current:i-1+0.5,total:pages,message:`Encoding page ${i}…`});
+        const jpegBlob=await new Promise((resolve,reject)=>{
+          canvas.toBlob(blob=>{ if(blob){ resolve(blob); } else { reject(new Error('Failed to encode page.')); } },'image/jpeg',effectiveOptions.quality);
+        });
+        const jpgBytes=new Uint8Array(await jpegBlob.arrayBuffer());
         const img=await pdfDoc.embedJpg(jpgBytes);
         const pdfPage=pdfDoc.addPage([baseWidth,baseHeight]);
         pdfPage.drawImage(img,{ x:0, y:0, width:baseWidth, height:baseHeight });
         canvas.width=canvas.height=0;
         progressCb?.({current:i,total:pages,message:`Embedded page ${i} of ${pages}`});
+        if((i % PAGE_YIELD_INTERVAL)===0){ await yieldToBrowser(); }
       }
 
       const pdfBytes=await pdfDoc.save({ useObjectStreams:true, addDefaultPage:false });
       progressCb?.({current:pages,total:pages,message:'Finalising…'});
-      return { blob:new Blob([pdfBytes],{type:'application/pdf'}), pageCount:pages, originalBytes:arrayBuffer.byteLength, outputBytes:pdfBytes.length, complianceLabel, fileSuffix };
+      if(sizeGuardApplied){
+        complianceLabel+=` • Adaptive size guard applied (${Math.round(effectiveOptions.dpi)} dpi / JPEG ${Math.round(effectiveOptions.quality*100)}%)`;
+      }
+      return { blob:new Blob([pdfBytes],{type:'application/pdf'}), pageCount:pages, originalBytes:arrayBuffer.byteLength, outputBytes:pdfBytes.length, complianceLabel, fileSuffix, usedOptions:effectiveOptions, sizeGuardApplied };
     }finally{
       await loadingTask.destroy();
     }

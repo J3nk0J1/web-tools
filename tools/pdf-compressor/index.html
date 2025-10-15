@@ -6,37 +6,6 @@
   <title>PDF Compressor</title>
   <link rel="stylesheet" href="../../css/styles.css" />
   <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
-  <style>
-    .panel { margin-bottom: 16px; }
-    .progress { border:1px solid var(--divider); border-radius:999px; overflow:hidden; height:12px; background:color-mix(in oklab, var(--surface) 70%, var(--divider)); }
-    .progress__bar { height:100%; width:0%; background:var(--primary); transition:width .2s ease; }
-    .results { display:flex; flex-direction:column; gap:12px; }
-    .stats { display:grid; gap:6px; color:var(--text-muted); }
-    .stats strong { color:var(--text); }
-    .hint { color:var(--text-muted); }
-    .actions { display:flex; gap:8px; flex-wrap:wrap; }
-    #fileInput { display:none; }
-    .badge { display:inline-flex; align-items:center; gap:6px; background:color-mix(in oklab, var(--primary) 18%, transparent); color:var(--primary); border-radius:999px; padding:4px 10px; font-size:.85rem; font-weight:600; }
-    .settings-layout { display:grid; gap:24px; align-items:start; }
-    @media (min-width: 960px){
-      .settings-layout { grid-template-columns: minmax(280px,1fr) minmax(320px,1fr); }
-    }
-    .field-group { display:grid; gap:18px; }
-    .output-options { display:grid; gap:12px; }
-    .option-card { display:flex; gap:12px; border:1px solid color-mix(in oklab, var(--primary) 24%, transparent); border-radius:14px; padding:14px 16px; background:color-mix(in oklab, var(--primary) 10%, transparent); transition:border-color .2s ease, box-shadow .2s ease; cursor:pointer; }
-    .option-card:focus-within, .option-card:hover { border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent); }
-    .option-card input { margin-top:4px; accent-color:var(--primary); }
-    .option-card__content { display:flex; flex-direction:column; gap:4px; }
-    .option-card__title { font-weight:600; color:var(--text); }
-    .option-card__description { font-size:0.9rem; color:var(--text-muted); }
-    .actions--inline { margin-top:16px; }
-    .steps { margin:0; padding-left:20px; display:grid; gap:6px; }
-    .steps li { font-weight:500; }
-    .callout { border-radius:12px; border:1px solid color-mix(in oklab, var(--primary) 40%, transparent); background:color-mix(in oklab, var(--primary) 12%, transparent); padding:12px 14px; }
-    .callout strong { color:var(--primary); }
-    .error-banner { display:none; margin:16px auto 0; max-width:1100px; background:color-mix(in oklab, var(--error) 18%, transparent); color:var(--error); border:1px solid color-mix(in oklab, var(--error) 40%, transparent); border-radius:12px; padding:12px 16px; box-shadow:var(--shadow-1); }
-    .error-banner[aria-hidden="false"] { display:block; }
-  </style>
 </head>
 <body>
   <header class="app-bar" role="banner">
@@ -87,7 +56,7 @@
       <div id="dropzone" class="dropzone" tabindex="0">
         <p>Drag &amp; drop a PDF here, or</p>
         <button id="chooseFileBtn" class="btn" type="button" data-ripple>Choose file</button>
-        <input id="fileInput" type="file" accept="application/pdf" />
+        <input id="fileInput" type="file" accept="application/pdf" hidden />
       </div>
     </section>
 

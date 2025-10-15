@@ -31,6 +31,7 @@
   const infoCodec=document.getElementById('infoCodec');
   const codecTableBody=document.getElementById('codecTableBody');
   const chooseNewVideo=document.getElementById('chooseNewVideo');
+  const uploadStatus=document.getElementById('uploadStatus');
 
   let objectURL=null; let hideControlsTimeout=null; let isScrubbing=false; let lastVolume=1;
 
@@ -60,8 +61,25 @@
     dropzone.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); fileInput?.click();}});
   }
 
+  function setUploadStatus(message,type='info'){
+    if(!uploadStatus) return;
+    uploadStatus.hidden=false;
+    uploadStatus.textContent=message;
+    uploadStatus.classList.remove('status--error','status--success','status--info','status--warning');
+    const cls=type==='error'?'status--error':type==='success'?'status--success':type==='warning'?'status--warning':'status--info';
+    uploadStatus.classList.add(cls);
+  }
+
+  function clearUploadStatus(){
+    if(!uploadStatus) return;
+    uploadStatus.hidden=true;
+    uploadStatus.textContent='';
+    uploadStatus.classList.remove('status--error','status--success','status--info','status--warning');
+  }
+
   function loadFile(file){
-    if(!isVideoFile(file)){ alert('Please select a video file.'); return; }
+    if(!isVideoFile(file)){ setUploadStatus('Only video files are supported. Please choose a video container such as MP4 or WebM.', 'error'); return; }
+    clearUploadStatus();
     revokeObjectURL();
     objectURL=URL.createObjectURL(file);
     video.src=objectURL;
@@ -80,6 +98,7 @@
     infoCodec.textContent=describeCodec(file);
     fileMeta.textContent=`Loaded ${file.name||'video'} • ${(file.size/1024/1024).toFixed(2)} MB • ${file.type||'unknown type'}`;
     renderCodecTable();
+    setUploadStatus(`Ready to play ${file.name||'your video'}.`, 'success');
   }
 
   function resetPlayerView(){
@@ -98,6 +117,7 @@
     playerShell.dataset.state='paused';
     playerShell.dataset.controls='visible';
     updatePlayIcon();
+    clearUploadStatus();
   }
 
   function isVideoFile(file){
@@ -123,15 +143,17 @@
   async function renderCodecTable(){
     if(!codecTableBody) return;
     codecTableBody.innerHTML='';
-    for(const probe of CODEC_PROBES){
-      const {status,label}=await checkCodec(probe.type);
+    const rows = CODEC_PROBES.map((probe)=>{
       const tr=document.createElement('tr');
       const tdLabel=document.createElement('td'); tdLabel.textContent=probe.label; tr.appendChild(tdLabel);
-      const tdStatus=document.createElement('td');
-      tdStatus.innerHTML=badgeFor(status,label);
-      tr.appendChild(tdStatus);
+      const tdStatus=document.createElement('td'); tdStatus.textContent='Checking…'; tr.appendChild(tdStatus);
       codecTableBody.appendChild(tr);
-    }
+      return { probe, cell: tdStatus };
+    });
+    await Promise.all(rows.map(async ({ probe, cell })=>{
+      const {status,label}=await checkCodec(probe.type);
+      cell.innerHTML=badgeFor(status,label);
+    }));
   }
 
   async function checkCodec(type){
