@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Newsletter Builder</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
+  <style>
+    .newsletter-grid{display:grid;grid-template-columns:minmax(320px,1fr) minmax(380px,1fr);gap:24px;align-items:flex-start}
+    @media (max-width: 1024px){.newsletter-grid{grid-template-columns:1fr}}
+    .newsletter-editor{display:grid;gap:18px}
+    .newsletter-editor .field-row{display:grid;gap:16px}
+    .newsletter-editor .field-row--thirds{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+    .newsletter-editor .field-row--halves{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .newsletter-editor .field label{font-weight:600;font-size:.9rem;color:var(--text)}
+    .newsletter-editor textarea{min-height:110px;resize:vertical}
+    .newsletter-meta{color:var(--text-muted);font-size:.9rem}
+    .newsletter-articles{display:grid;gap:12px}
+    .article-card{border:1px solid var(--divider);border-radius:12px;padding:16px;display:grid;gap:14px;background:color-mix(in oklab,var(--surface) 96%,transparent);box-shadow:var(--shadow-1)}
+    .article-card__header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+    .article-card__title{font-weight:700;margin:0;font-size:1rem}
+    .article-card__actions{display:flex;flex-wrap:wrap;gap:8px}
+    .btn--ghost{--btn-bg:transparent;--btn-fg:var(--text);border:1.5px solid var(--divider);box-shadow:none}
+    .btn--ghost:hover{filter:brightness(1.02)}
+    .btn--small{padding:6px 12px;min-width:0;font-size:.85rem}
+    .newsletter-empty{color:var(--text-muted);font-size:.92rem;margin:0}
+    .newsletter-preview{display:grid;gap:12px}
+    .preview-box{border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow-1);background:var(--surface);overflow:hidden;display:grid;gap:0}
+    .preview-box__toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;background:color-mix(in oklab,var(--surface) 88%,transparent);border-bottom:1px solid var(--divider)}
+    .preview-box__message{font-size:.92rem;color:var(--text-muted);margin:0}
+    .preview-box iframe{width:100%;border:0;background:#ffffff;min-height:520px}
+    .preview-box__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;padding:12px 16px;background:color-mix(in oklab,var(--surface) 94%,transparent);border-top:1px solid var(--divider)}
+    .status[hidden]{display:none}
+  </style>
+</head>
+<body>
+  <header class="app-bar" role="banner">
+    <div class="app-bar__left">
+      <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </span>
+      </button>
+      <img src="../../assets/icons/newsletter-builder.svg" class="app-logo" alt="Newsletter Builder icon" />
+      <h1 class="app-title">Newsletter Builder</h1>
+    </div>
+    <div class="app-bar__right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
+        <span class="icon" id="themeIcon" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
+    <strong>⚠️ Important:</strong>
+    <span class="notice-bar__text">This tool is provided <em>as is</em> without warranty or support. Do not contact the ICT service desk; <strong>no support will be offered</strong>.</span>
+  </aside>
+
+  <main class="tool-content" role="main">
+    <section class="panel" aria-labelledby="overviewTitle">
+      <h2 id="overviewTitle">How to use this tool</h2>
+      <p class="meta">Build a newsletter layout optimised for Outlook. Adjust the settings, add your articles, and then export the HTML for distribution.</p>
+      <ol class="steps">
+        <li><strong>Step 1:</strong> Fill in the header, colours, and introduction for your newsletter.</li>
+        <li><strong>Step 2:</strong> Add articles with titles, summaries, links, and optional images.</li>
+        <li><strong>Step 3:</strong> Review the preview, then copy or download the generated HTML.</li>
+      </ol>
+    </section>
+
+    <section class="panel" aria-labelledby="builderHeading">
+      <h2 id="builderHeading">Compose your newsletter</h2>
+      <p class="meta">All changes update the preview automatically. Use the export buttons when you are happy with the layout.</p>
+      <div class="newsletter-grid">
+        <section class="newsletter-editor" aria-label="Newsletter settings">
+          <div class="field">
+            <label for="headerTitle">Header title (single line)</label>
+            <input class="input" id="headerTitle" placeholder="Business Unit Name Newsletter" />
+          </div>
+
+          <div class="field-row field-row--thirds">
+            <div class="field">
+              <label for="headerBg">Header background</label>
+              <input class="input" id="headerBg" type="color" value="#2962ff" />
+            </div>
+            <div class="field">
+              <label for="emailBg">Email background</label>
+              <input class="input" id="emailBg" type="color" value="#f1f3f9" />
+            </div>
+            <div class="field">
+              <label for="bodyWidth">Body width (px)</label>
+              <input class="input" id="bodyWidth" type="number" min="480" max="900" step="10" value="600" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="intro">Introductory paragraph</label>
+            <textarea id="intro" placeholder="Hello team,&#10;Welcome to the latest updates from Business Unit Name. Below you will find highlights, upcoming events, and key reminders."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Articles <span class="chip" id="articleCount">0</span></label>
+            <div class="newsletter-articles" id="articles"></div>
+            <div class="actions" style="margin-top:12px">
+              <button class="btn btn--outline" id="addArticleBtn" type="button" data-ripple>+ Add article</button>
+            </div>
+            <p class="newsletter-meta">Outlook 2016 does not render base64 inline images reliably. Use externally hosted images or insert them when sending the email.</p>
+          </div>
+
+          <div class="field-row field-row--halves">
+            <div class="field">
+              <label for="footer1">Footer – line 1</label>
+              <input class="input" id="footer1" placeholder="Business Unit Name" />
+            </div>
+            <div class="field">
+              <label for="footer2">Footer – line 2</label>
+              <input class="input" id="footer2" placeholder="123 Example Street, City" />
+            </div>
+          </div>
+
+          <div class="field-row field-row--halves">
+            <div class="field">
+              <label for="footerLinkText">Footer – link text</label>
+              <input class="input" id="footerLinkText" placeholder="Contact Business Unit Name" />
+            </div>
+            <div class="field">
+              <label for="footerLinkUrl">Footer – link URL</label>
+              <input class="input" id="footerLinkUrl" placeholder="mailto:example@example.com" />
+            </div>
+          </div>
+        </section>
+
+        <section class="newsletter-preview" aria-label="Preview">
+          <div class="preview-box">
+            <div class="preview-box__toolbar">
+              <p class="preview-box__message">This preview reflects how the email appears in Outlook 2016.</p>
+              <button class="btn" id="refreshBtn" type="button" data-ripple>Refresh</button>
+            </div>
+            <iframe id="preview" title="Email preview"></iframe>
+            <div class="preview-box__actions">
+              <button class="btn" id="downloadBtn" title="Download .htm" type="button" data-ripple>Download .htm</button>
+              <button class="btn btn--outline" id="copyBtn" title="Copy HTML" type="button" data-ripple>Copy HTML</button>
+            </div>
+          </div>
+          <p class="status status--info" id="statusMessage" role="status" aria-live="polite" hidden></p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="../../js/app.js"></script>
+  <script src="./newsletter-builder.js" defer></script>
+</body>
+</html>
