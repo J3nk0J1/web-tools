@@ -72,7 +72,23 @@
 
   formatSelect?.addEventListener('change', () => {
     toggleQuality();
-    if (queue.some(item => item.status === 'done')) {
+    let updated = false;
+    queue.forEach(item => {
+      if (item.status === 'done' || item.status === 'skipped') {
+        item.status = 'pending';
+        item.error = null;
+        item.skipReason = null;
+        if (item.downloadUrl) {
+          URL.revokeObjectURL(item.downloadUrl);
+          item.downloadUrl = null;
+        }
+        item.outputSize = null;
+        item.outputName = null;
+        updated = true;
+      }
+    });
+    if (updated) {
+      renderList();
       showStatus('Output format changed. Re-run compression to generate new downloads.', 'info');
     }
   });
@@ -128,7 +144,8 @@
         outputSize: null,
         downloadUrl: null,
         outputName: null,
-        error: null
+        error: null,
+        skipReason: null
       });
     });
 
@@ -163,7 +180,11 @@
     if (downloadAllBtn) {
       downloadAllBtn.disabled = true;
     }
-    showStatus('Compressing images. Downloads will begin automatically.', 'info');
+    showStatus('Compressing images. Download links will be ready once processing finishes.', 'info');
+
+    let successCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
 
     for (const item of queue) {
       if (item.status === 'done' && item.downloadUrl) {
@@ -171,22 +192,37 @@
       }
       item.status = 'processing';
       item.error = null;
+      item.skipReason = null;
       renderList();
       try {
         const blob = await compressFile(item.file);
         item.outputSize = blob.size;
+        if (blob.size >= item.originalSize) {
+          if (item.downloadUrl) {
+            URL.revokeObjectURL(item.downloadUrl);
+            item.downloadUrl = null;
+          }
+          item.outputName = null;
+          item.status = 'skipped';
+          item.skipReason = 'Compressed file would be larger than the original.';
+          skippedCount += 1;
+          renderList();
+          continue;
+        }
+
         item.outputName = buildFileName(item.file.name, getSelectedFormat());
         if (item.downloadUrl) {
           URL.revokeObjectURL(item.downloadUrl);
         }
         item.downloadUrl = URL.createObjectURL(blob);
         item.status = 'done';
+        successCount += 1;
         renderList();
-        triggerDownload(item);
       } catch (error) {
         console.error(error);
         item.status = 'error';
         item.error = error instanceof Error ? error.message : 'Unknown compression error.';
+        errorCount += 1;
         renderList();
       }
     }
@@ -197,12 +233,37 @@
     isCompressing = false;
     refreshControls();
 
-    if (queue.every(item => item.status === 'done')) {
-      showStatus('Compression complete. All downloads are ready.', 'success');
-    } else if (queue.some(item => item.status === 'error')) {
-      showStatus('Finished with some errors. Retry the failed files.', 'warning');
+    const processedCount = successCount + skippedCount + errorCount;
+    if (processedCount === 0) {
+      if (queue.length && queue.every(item => item.status === 'done' && item.downloadUrl)) {
+        showStatus('Compression complete. Your download links are ready.', 'success');
+      } else {
+        clearStatus();
+      }
+      return;
+    }
+
+    if (successCount > 0 && skippedCount === 0 && errorCount === 0) {
+      showStatus('Compression complete. Your download links are ready.', 'success');
     } else {
-      clearStatus();
+      const parts = [];
+      if (successCount > 0) {
+        parts.push(`${successCount} image(s) compressed successfully.`);
+      }
+      if (skippedCount > 0) {
+        parts.push(`${skippedCount} image(s) skipped because the compressed file would have been larger than the original.`);
+      }
+      if (errorCount > 0) {
+        parts.push(`${errorCount} image(s) failed. Retry the affected files.`);
+      }
+
+      if (parts.length) {
+        const message = parts.join(' ');
+        const type = errorCount > 0 ? 'warning' : skippedCount > 0 ? 'info' : 'success';
+        showStatus(message, type);
+      } else {
+        clearStatus();
+      }
     }
   }
 
@@ -251,6 +312,10 @@
           ratio.textContent = `≈ ${pct}% of original`;
           sizes.appendChild(ratio);
         }
+      } else if (item.status === 'skipped' && typeof item.outputSize === 'number') {
+        const attemptedSize = document.createElement('span');
+        attemptedSize.textContent = `Skipped: ${formatBytes(item.outputSize)} (larger than original)`;
+        sizes.appendChild(attemptedSize);
       }
 
       meta.append(name, status, sizes);
@@ -283,6 +348,14 @@
         retryBtn.addEventListener('click', () => retryItem(item));
         actions.appendChild(retryBtn);
         enhanceRipple(retryBtn);
+      } else if (item.status === 'skipped') {
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'btn btn--outline';
+        retryBtn.textContent = 'Try again';
+        retryBtn.addEventListener('click', () => retryItem(item));
+        actions.appendChild(retryBtn);
+        enhanceRipple(retryBtn);
       }
 
       if (actions.childElementCount) {
@@ -299,6 +372,7 @@
   function retryItem(item){
     item.status = 'pending';
     item.error = null;
+    item.skipReason = null;
     if (item.downloadUrl) {
       URL.revokeObjectURL(item.downloadUrl);
       item.downloadUrl = null;
@@ -326,6 +400,7 @@
     if (item.status === 'processing') return 'Compressing…';
     if (item.status === 'done') return `Ready • ${item.outputName}`;
     if (item.status === 'error') return `Error: ${item.error || 'Unable to compress file.'}`;
+    if (item.status === 'skipped') return `Skipped • ${item.skipReason || 'Compressed file was larger than original.'}`;
     return 'Queued';
   }
 
