@@ -35,13 +35,6 @@
     .callout { border-radius:12px; border:1px solid color-mix(in oklab, var(--primary) 40%, transparent); background:color-mix(in oklab, var(--primary) 12%, transparent); padding:12px 14px; }
     .callout strong { color:var(--primary); }
     .error-banner { display:none; margin:16px auto 0; max-width:1100px; background:color-mix(in oklab, var(--error) 18%, transparent); color:var(--error); border:1px solid color-mix(in oklab, var(--error) 40%, transparent); border-radius:12px; padding:12px 16px; box-shadow:var(--shadow-1); }
-    .notice-bar { max-width:1100px; margin:16px auto 0; padding:10px 14px; border-radius:12px; display:flex; gap:10px; align-items:flex-start; font-size:.95rem; box-shadow:var(--shadow-1); border:1px solid var(--divider); background:color-mix(in oklab, var(--surface) 80%, transparent); }
-    .notice-bar + .notice-bar { margin-top:10px; }
-    .notice-bar__icon { font-size:1.1rem; line-height:1; }
-    .notice-bar__content { margin:0; }
-    .notice-bar__content strong { display:block; font-size:1rem; margin-bottom:2px; }
-    .notice-bar--warning { border-color:color-mix(in oklab, var(--warning-border) 70%, transparent); background:color-mix(in oklab, var(--warning-bg) 75%, transparent); color:var(--warning-text); }
-    .notice-bar--info { border-color:color-mix(in oklab, var(--primary) 18%, transparent); background:color-mix(in oklab, var(--primary) 9%, transparent); color:var(--text); }
     .error-banner[aria-hidden="false"] { display:block; }
   </style>
 </head>
@@ -63,13 +56,11 @@
     </div>
   </header>
 
-  <aside class="notice-bar notice-bar--warning" role="note" aria-live="polite">
-    <span class="notice-bar__icon" aria-hidden="true">⚠️</span>
-    <p class="notice-bar__content"><strong>Important</strong> This tool is provided as is without warranty or support. Do not contact the ICT service desk; no support will be offered.</p>
+  <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
+    <strong>⚠️ Important:</strong> This tool is provided as is without warranty or support. Do not contact the ICT service desk; no support will be offered.
   </aside>
-  <aside class="notice-bar notice-bar--info" role="note" aria-live="polite">
-    <span class="notice-bar__icon" aria-hidden="true">ℹ️</span>
-    <p class="notice-bar__content"><strong>Offline only</strong> Files never leave this workstation. All processing happens locally in your browser.</p>
+  <aside class="notice-bar notice-bar--offline" role="note" aria-live="polite">
+    <strong>ℹ️ Offline only:</strong> Files never leave this workstation. All processing happens locally in your browser.
   </aside>
   
 
