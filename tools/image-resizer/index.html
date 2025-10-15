@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image Resizer</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
+  <style>
+    .panel { margin-bottom: 16px; }
+    .layout-2col { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    @media (max-width:900px){ .layout-2col { grid-template-columns:1fr; } }
+    .preview-wrap { display:grid; gap:12px; }
+    .preview { border:1px solid var(--divider); border-radius:12px; padding:12px; background:var(--surface); }
+    canvas { display:block; max-width:100%; border-radius:8px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .hint { color: var(--text-muted); }
+    #origCanvas:hover, #canvas:hover { cursor: zoom-in; }
+  </style>
+</head>
+<body>
+  <header class="app-bar" role="banner">
+    <div class="app-bar__left">
+      <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </span>
+      </button>
+      <img src="../../assets/icons/image-resizer.svg" class="app-logo" alt="Image Resizer icon" />
+      <h1 class="app-title">Image Resizer</h1>
+    </div>
+    <div class="app-bar__right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
+        <span class="icon" id="themeIcon" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="warning" role="note" aria-live="polite">
+    <strong>⚠️ Important:</strong> This tool is provided <em>as is</em> without warranty or support. Do not contact the ICT service desk; <strong>no support will be offered</strong>.
+  </aside>
+
+  <main class="tool-content" role="main">
+    <section class="panel" aria-labelledby="upload-title" id="panel1">
+      <h2 id="upload-title">Upload image</h2>
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <p>Drag & drop an image here, or</p>
+        <button id="chooseFileBtn" class="btn" type="button" data-ripple>Choose file</button>
+        <input id="fileInput" type="file" accept="image/*" style="display:none" />
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="settings-title" id="panel2" hidden>
+      <h2 id="settings-title">Settings</h2>
+      <div class="layout-2col">
+        <div class="field">
+          <label for="fitMode">Fit mode</label>
+          <select id="fitMode" class="input">
+            <option value="contain" selected>Contain (keep aspect)</option>
+            <option value="exact">Exact (stretch)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="format">Output format</label>
+          <select id="format" class="input">
+            <option value="image/jpeg">JPEG (.jpg)</option>
+            <option value="image/png" selected>PNG (.png)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="targetWidth">Target width (px)</label>
+          <input id="targetWidth" class="input" type="number" min="1" max="8000" value="1024" />
+        </div>
+        <div class="field">
+          <label for="targetHeight">Target height (px)</label>
+          <input id="targetHeight" class="input" type="number" min="1" max="8000" value="768" />
+        </div>
+        <div class="field row">
+          <input type="checkbox" id="keepAspect" checked />
+          <label for="keepAspect">Keep aspect ratio</label>
+        </div>
+        <div class="field" id="jpegQualityField">
+          <label for="jpegQuality">JPEG quality</label>
+          <input id="jpegQuality" type="range" min="0" max="100" value="80" />
+          <div class="meta">Quality: <span id="qualityLabel">80</span></div>
+        </div>
+        <div class="field" id="bgColorField">
+          <label for="bgColor">Background (for JPEG transparency)</label>
+          <input id="bgColor" type="color" class="color-input" value="#ffffff" />
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Presets</label>
+          <div class="row">
+            <button class="btn btn--outline" data-preset="640x480" data-ripple>640×480</button>
+            <button class="btn btn--outline" data-preset="800x600" data-ripple>800×600</button>
+            <button class="btn btn--outline" data-preset="1024x768" data-ripple>1024×768</button>
+            <button class="btn btn--outline" data-preset="1920x1080" data-ripple>1920×1080</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="preview-title" id="panel3" hidden>
+      <h2 id="preview-title">Previews</h2>
+      <p class="hint">Mouse over either preview to zoom both by 60% at the same location. Move the mouse to pan the zoom. Move out to restore.</p>
+
+      <div class="layout-2col" id="sideBySide">
+        <div class="preview-wrap" id="originalWrap">
+          <div class="preview">
+            <h3 style="margin:0">Original</h3>
+            <canvas id="origCanvas" aria-label="Original preview"></canvas>
+            <div class="meta" id="originalMeta"></div>
+          </div>
+        </div>
+        <div class="preview-wrap" id="outputWrap">
+          <div class="preview">
+            <h3 style="margin:0">Output</h3>
+            <canvas id="canvas" aria-label="Output preview"></canvas>
+            <div class="meta" id="outputMeta"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="download-title" id="panel4" hidden>
+      <h2 id="download-title">Download</h2>
+      <p class="meta">When satisfied, download your resized image.</p>
+      <div class="actions">
+        <button id="downloadBtn" class="btn" data-ripple disabled>Download</button>
+        <button id="resetBtn" class="btn btn--secondary" data-ripple>Start over</button>
+      </div>
+    </section>
+
+    <p class="meta" style="margin-top:16px">Tip: "Contain" preserves aspect ratio within the target width/height. "Exact" stretches to the target size. JPEG offers higher compression; PNG preserves transparency.</p>
+  </main>
+
+  <script src="../../js/app.js"></script>
+  <script src="./image-resizer.js"></script>
+</body>
+</html>

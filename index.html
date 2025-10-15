@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intranet Tools</title>
+  <meta name="description" content="Offline intranet tools dashboard" />
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="icon" href="./assets/icons/app-logo.svg" type="image/svg+xml" />
+</head>
+<body>
+  <header class="app-bar" role="banner">
+    <div class="app-bar__left">
+      <img src="./assets/icons/app-logo.svg" class="app-logo" alt="Tools logo" />
+      <h1 class="app-title">Intranet Tools</h1>
+    </div>
+    <div class="app-bar__right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
+        <span class="icon" id="themeIcon" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="warning" role="note" aria-live="polite">
+    <strong>⚠️ Important:</strong> This toolset is provided <em>as is</em> without warranty or support. Do not contact the ICT service desk; <strong>no support will be offered</strong> for these tools.
+  </aside>
+
+  <main class="container" role="main">
+    <section aria-labelledby="tools-heading">
+      <h2 id="tools-heading" class="sr-only">Available tools</h2>
+      <div class="card-grid">
+        <!-- Image Resizer -->
+        <article class="card" tabindex="0">
+          <div class="card__media"><img src="./assets/icons/image-resizer.svg" alt="Image Resizer icon" /></div>
+          <div class="card__body">
+            <h3 class="card__title">Image Resizer</h3>
+            <p class="card__subtitle">Resize images, choose JPG/PNG, adjust quality, and compare with synchronized hover zoom.</p>
+          </div>
+          <div class="card__actions">
+            <a class="btn" data-ripple href="./tools/image-resizer/index.html">Open</a>
+          </div>
+        </article>
+        <!-- MGRS Converter -->
+        <article class="card" tabindex="0">
+          <div class="card__media"><img src="./assets/icons/compass.svg" alt="Compass icon" /></div>
+          <div class="card__body">
+            <h3 class="card__title">MGRS Converter</h3>
+            <p class="card__subtitle">Convert between Latitude/Longitude and MGRS (UTM-based). Interactive, verbose, yet simple.</p>
+          </div>
+          <div class="card__actions">
+            <a class="btn" data-ripple href="./tools/mgrs-converter/index.html">Open</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>
