@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metadata Scrubber</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
+  <style>
+    .panel { margin-bottom: 16px; }
+    .layout-2col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+    @media (max-width: 900px) {
+      .layout-2col { grid-template-columns: 1fr; }
+    }
+    figure { margin: 0; display: grid; gap: 12px; }
+    .preview-box { border: 1px solid var(--divider); border-radius: 12px; overflow: hidden; background: var(--surface); display: grid; }
+    .preview-box img { width: 100%; height: auto; display: block; }
+    .meta-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+    .meta-list li { background: color-mix(in oklab, var(--primary) 8%, var(--surface)); border: 1px solid var(--divider); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+    .meta-list strong { font-weight: 600; }
+    .status { margin-top: 12px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .info-grid { display: grid; gap: 8px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--divider); background: var(--surface); color: var(--text-muted); font-size: 0.88rem; }
+    .chip svg { width: 16px; height: 16px; }
+    .empty-state { border: 1px dashed var(--divider); border-radius: 10px; padding: 12px; text-align: center; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <header class="app-bar" role="banner">
+    <div class="app-bar__left">
+      <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </span>
+      </button>
+      <img src="../../assets/icons/metadata-scrubber.svg" class="app-logo" alt="Metadata Scrubber icon" />
+      <h1 class="app-title">Metadata Scrubber</h1>
+    </div>
+    <div class="app-bar__right">
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
+        <span class="icon" id="themeIcon" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="warning" role="note" aria-live="polite">
+    <strong>⚠️ Important:</strong> This tool is provided <em>as is</em> without warranty or support. Do not contact the ICT service desk; <strong>no support will be offered</strong>.
+  </aside>
+
+  <main class="tool-content" role="main">
+    <section class="panel" aria-labelledby="upload-title" id="panelUpload">
+      <h2 id="upload-title">Select an image</h2>
+      <p class="meta">Works entirely in your browser. The file never leaves this device.</p>
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <p>Drag & drop an image here, or</p>
+        <button id="chooseFileBtn" class="btn" type="button" data-ripple>Choose file</button>
+        <input id="fileInput" type="file" accept="image/*" hidden />
+      </div>
+      <p id="status" class="meta status" role="status" aria-live="polite" hidden></p>
+    </section>
+
+    <section class="panel" aria-labelledby="original-title" id="panelOriginal" hidden>
+      <h2 id="original-title">Original file</h2>
+      <div class="layout-2col">
+        <figure>
+          <div class="preview-box">
+            <img id="originalPreview" alt="Original image preview" />
+          </div>
+          <figcaption class="info-grid">
+            <span class="chip" id="fileNameChip"></span>
+            <span class="chip" id="fileSizeChip"></span>
+            <span class="chip" id="fileTypeChip"></span>
+            <span class="chip" id="dimensionsChip"></span>
+          </figcaption>
+        </figure>
+        <div>
+          <h3>Metadata detected</h3>
+          <ul id="metadataList" class="meta-list" aria-live="polite"></ul>
+          <div id="noMetadata" class="empty-state" hidden>No embedded metadata was found.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="scrubbed-title" id="panelScrubbed" hidden>
+      <h2 id="scrubbed-title">Scrubbed copy</h2>
+      <div class="layout-2col">
+        <figure>
+          <div class="preview-box">
+            <img id="scrubbedPreview" alt="Scrubbed image preview" />
+          </div>
+          <figcaption class="info-grid">
+            <span class="chip" id="scrubbedSizeChip"></span>
+            <span class="chip" id="scrubbedTypeChip"></span>
+          </figcaption>
+        </figure>
+        <div>
+          <h3>Removed details</h3>
+          <ul id="removedList" class="meta-list" aria-live="polite"></ul>
+          <div class="empty-state" id="nothingRemoved" hidden>No metadata needed removal. A clean copy has still been generated.</div>
+          <div class="actions" style="margin-top:12px;">
+            <a id="downloadBtn" class="btn" data-ripple download>Download scrubbed image</a>
+            <button id="resetBtn" class="btn btn--secondary" type="button" data-ripple>Start over</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../../js/app.js"></script>
+  <script src="./metadata-scrubber.js"></script>
+</body>
+</html>
