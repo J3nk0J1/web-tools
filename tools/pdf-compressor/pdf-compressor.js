@@ -3,6 +3,8 @@
   const dropzone=document.getElementById('dropzone');
   const chooseFileBtn=document.getElementById('chooseFileBtn');
   const fileInput=document.getElementById('fileInput');
+  const panelOverview=document.getElementById('panel-overview');
+  const panelUpload=document.getElementById('panel-upload');
   const panelSettings=document.getElementById('panel-settings');
   const panelProgress=document.getElementById('panel-progress');
   const panelResults=document.getElementById('panel-results');
@@ -20,11 +22,16 @@
   const downscaleInput=document.getElementById('downscale');
   const qualityNotice=document.getElementById('qualityNotice');
   const errorBanner=document.getElementById('errorBanner');
+  const startOverFromSettings=document.getElementById('startOverFromSettings');
+  const startOverFromProgress=document.getElementById('startOverFromProgress');
+  const progressActions=document.getElementById('progressActions');
   const outputTypeRadios=Array.from(document.querySelectorAll('input[name="outputType"]'));
 
   const defaultNotice='Adjust DPI, JPEG quality and maximum page size to balance clarity and size for everyday use.';
+  const accessNotice='Access copy uses recommended settings tuned for day-to-day sharing. Switch to Custom to adjust them.';
   const naaNotice='NAA archival standard uses locked settings: 300 dpi, JPEG quality 90, and no resizing. These match the preservation rules required by the Act.';
   const naaSettings={ dpi:'300', quality:'90', downscale:'0' };
+  const accessSettings={ dpi:'150', quality:'85', downscale:'3500' };
   const initialManualSettings={ dpi:dpiInput.value, quality:qualityInput.value, downscale:downscaleInput.value };
   let manualSettings={ ...initialManualSettings };
 
@@ -42,6 +49,7 @@
 
   outputTypeRadios.forEach(radio=>radio.addEventListener('change',updateActionLabels));
   updateActionLabels();
+  goToStep(1);
 
   const prevent=e=>{e.preventDefault(); e.stopPropagation();};
   ['dragenter','dragover','dragleave','drop'].forEach(evt=>dropzone.addEventListener(evt,prevent));
@@ -65,9 +73,8 @@
 
   downloadBtn.addEventListener('click',()=>{ if(outputBlob){ triggerDownload(outputBlob,outputName); }});
 
-  resetBtn.addEventListener('click',()=>{
+  const resetFlow=()=>{
     currentFile=null; outputBlob=null; outputName=''; fileInput.value='';
-    panelSettings.hidden=true; panelProgress.hidden=true; panelResults.hidden=true;
     dropzone.querySelector('p').textContent='Drag & drop a PDF here, or';
     inputMeta.textContent=''; generateBtn.disabled=true; downloadBtn.disabled=true;
     progressBar.style.width='0%'; progressStatus.textContent='Waiting…'; stats.innerHTML='';
@@ -75,11 +82,16 @@
     outputTypeRadios.forEach(radio=>{ radio.checked=radio.value==='access'; });
     updateActionLabels();
     clearError();
-  });
+    goToStep(1);
+  };
+
+  resetBtn.addEventListener('click',resetFlow);
+  startOverFromSettings?.addEventListener('click',resetFlow);
+  startOverFromProgress?.addEventListener('click',resetFlow);
 
   async function runCompression(){
     generateBtn.disabled=true; downloadBtn.disabled=true; outputBlob=null; stats.innerHTML='';
-    panelProgress.hidden=false; panelResults.hidden=true;
+    goToStep(3);
     const dpi=clamp(parseInt(dpiInput.value,10)||150,72,600);
     const quality=clamp(parseInt(qualityInput.value,10)||85,40,100)/100;
     const downscaleVal=Math.max(0,parseInt(downscaleInput.value,10)||0);
@@ -93,7 +105,7 @@
       const safeBase=deriveBaseName(currentFile.name||'document');
       outputName=`${safeBase}-${fileSuffix}.pdf`;
       downloadBtn.disabled=false;
-      panelResults.hidden=false;
+      goToStep(4);
       const reduction=originalBytes>0?((1-(outputBytes/originalBytes))*100):0;
       const reductionText=reduction>=0?`${reduction.toFixed(1)}% reduction`:`${Math.abs(reduction).toFixed(1)}% increase`;
       stats.innerHTML=`
@@ -105,10 +117,12 @@
         <div><strong>Compliance:</strong> ${complianceLabel}</div>`;
       progressStatus.textContent='Ready to download.';
       clearError();
+      requestAnimationFrame(()=>{ panelResults?.scrollIntoView({ behavior:'smooth', block:'start' }); });
     }catch(err){
       console.error(err);
       showError('We could not compress this PDF. The file may be protected or use features we do not support yet. Please try another file or check with the records team.');
       progressStatus.textContent='Processing failed.';
+      goToStep(3);
     }finally{
       generateBtn.disabled=false;
     }
@@ -120,10 +134,10 @@
     const meta=`Selected: ${file.name} • ${formatBytes(file.size)} • Last modified ${formatDate(file.lastModified||Date.now())}`;
     inputMeta.textContent=meta;
     dropzone.querySelector('p').textContent='File selected. Choose another to replace.';
-    panelSettings.hidden=false; panelProgress.hidden=true; panelResults.hidden=true;
     generateBtn.disabled=false; downloadBtn.disabled=true; stats.innerHTML=''; progressStatus.textContent='Waiting…'; progressBar.style.width='0%';
     updateActionLabels();
     clearError();
+    goToStep(2);
   }
 
   async function compressDocument(file,options,mode,progressCb){
@@ -143,7 +157,7 @@
       pdfDoc.setCreationDate(now); pdfDoc.setModificationDate(now);
 
       let complianceLabel='PDF 1.7 access derivative — baseline JPEG imagery, ZIP structure streams, offline processing (aligns with NAA access copy guidance)';
-      let fileSuffix='compressed';
+      let fileSuffix='access';
 
       if(mode==='pdfa'){
         pdfDoc.setTitle(`${titleBase} (PDF/A-2b)`);
@@ -152,7 +166,14 @@
         const iso=now.toISOString();
         const title=escapeXML(pdfDoc.getTitle()||'PDF/A Output');
         const xmp=`<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">\n    <rdf:Description rdf:about="">\n      <dc:format>application/pdf</dc:format>\n      <dc:title><rdf:Alt><rdf:li xml:lang="en-AU">${title}</rdf:li></rdf:Alt></dc:title>\n      <xmp:CreateDate>${iso}</xmp:CreateDate>\n      <xmp:ModifyDate>${iso}</xmp:ModifyDate>\n      <xmp:MetadataDate>${iso}</xmp:MetadataDate>\n      <pdf:Producer>Intranet PDF Compressor</pdf:Producer>\n      <pdfaid:part>2</pdfaid:part>\n      <pdfaid:conformance>B</pdfaid:conformance>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>`;
-        pdfDoc.setXmpMetadata(xmp);
+        if(typeof pdfDoc.setXmpMetadata==='function'){
+          pdfDoc.setXmpMetadata(xmp);
+        }else{
+          const metadataBytes=new TextEncoder().encode(xmp);
+          const metadataStream=pdfDoc.context.flateStream(metadataBytes,{ Type:PDFName.of('Metadata'), Subtype:PDFName.of('XML') });
+          const metadataRef=pdfDoc.context.register(metadataStream);
+          pdfDoc.catalog.set(PDFName.of('Metadata'), metadataRef);
+        }
 
         const iccData=await loadSrgbProfile();
         const iccStream=pdfDoc.context.register(pdfDoc.context.flateStream(iccData,{
@@ -170,6 +191,12 @@
         pdfDoc.catalog.set(PDFName.of('OutputIntents'), pdfDoc.context.obj([outputIntent]));
         complianceLabel='PDF/A-2b archival derivative — sRGB output intent, ZIP structure streams, baseline JPEG imagery, no LZW (complies with NAA long-term guidance)';
         fileSuffix='pdfa2b';
+      }else if(mode==='custom'){
+        pdfDoc.setTitle(`${titleBase} (Custom derivative)`);
+        pdfDoc.setSubject('Custom compressed derivative');
+        pdfDoc.setKeywords(['PDF','Compression','Custom']);
+        complianceLabel='PDF 1.7 custom derivative — manual DPI/quality/downscale applied per user selection.';
+        fileSuffix='custom';
       }else{
         pdfDoc.setTitle(`${titleBase} (Access copy)`);
         pdfDoc.setSubject('Compressed access derivative');
@@ -270,6 +297,9 @@
     if(mode==='pdfa'){
       generateBtn.textContent='Generate PDF/A-2b file';
       downloadBtn.textContent='Download PDF/A';
+    }else if(mode==='custom'){
+      generateBtn.textContent='Generate custom PDF';
+      downloadBtn.textContent='Download custom PDF';
     }else{
       generateBtn.textContent='Generate access copy';
       downloadBtn.textContent='Download PDF';
@@ -286,6 +316,15 @@
       qualityInput.disabled=true;
       downscaleInput.disabled=true;
       if(qualityNotice){ qualityNotice.textContent=naaNotice; }
+    }else if(mode==='access'){
+      rememberManualSettings();
+      dpiInput.value=accessSettings.dpi;
+      qualityInput.value=accessSettings.quality;
+      downscaleInput.value=accessSettings.downscale;
+      dpiInput.disabled=true;
+      qualityInput.disabled=true;
+      downscaleInput.disabled=true;
+      if(qualityNotice){ qualityNotice.textContent=accessNotice; }
     }else{
       dpiInput.disabled=false;
       qualityInput.disabled=false;
@@ -302,6 +341,16 @@
   function rememberManualSettings(){
     if(dpiInput.disabled||qualityInput.disabled||downscaleInput.disabled) return;
     manualSettings={ dpi:dpiInput.value, quality:qualityInput.value, downscale:downscaleInput.value };
+  }
+
+  function goToStep(step){
+    if(!panelUpload||!panelSettings||!panelProgress||!panelResults) return;
+    panelUpload.hidden=step!==1;
+    panelSettings.hidden=step!==2;
+    panelProgress.hidden=step!==3;
+    panelResults.hidden=step!==4;
+    if(progressActions){ progressActions.hidden=step!==3; }
+    if(panelOverview){ panelOverview.hidden=step>1; }
   }
 
   function showError(message){
