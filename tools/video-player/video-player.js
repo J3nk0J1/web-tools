@@ -4,6 +4,7 @@
   backBtn?.addEventListener('click',()=>{ window.location.href='../../index.html'; });
 
   const dropzone=document.getElementById('dropzone');
+  const uploadSection=document.getElementById('uploadSection');
   const chooseFile=document.getElementById('chooseFile');
   const fileInput=document.getElementById('fileInput');
   const playerPanel=document.getElementById('playerPanel');
@@ -29,6 +30,7 @@
   const infoDuration=document.getElementById('infoDuration');
   const infoCodec=document.getElementById('infoCodec');
   const codecTableBody=document.getElementById('codecTableBody');
+  const chooseNewVideo=document.getElementById('chooseNewVideo');
 
   let objectURL=null; let hideControlsTimeout=null; let isScrubbing=false; let lastVolume=1;
 
@@ -47,6 +49,7 @@
 
   chooseFile?.addEventListener('click',()=>fileInput?.click());
   fileInput?.addEventListener('change',e=>{const file=e.target.files?.[0]; if(file) loadFile(file);});
+  chooseNewVideo?.addEventListener('click',resetPlayerView);
 
   if(dropzone){
     ['dragenter','dragover','dragleave','drop'].forEach(evt=>dropzone.addEventListener(evt,evt=>{evt.preventDefault(); evt.stopPropagation();}));
@@ -65,6 +68,8 @@
     video.currentTime=0;
     video.playbackRate=1;
     playerPanel.hidden=false;
+    uploadSection?.setAttribute('hidden','');
+    dropzone?.classList.remove('highlight');
     playerShell.dataset.state='paused';
     playerShell.dataset.controls='visible';
     updatePlayIcon();
@@ -75,6 +80,24 @@
     infoCodec.textContent=describeCodec(file);
     fileMeta.textContent=`Loaded ${file.name||'video'} • ${(file.size/1024/1024).toFixed(2)} MB • ${file.type||'unknown type'}`;
     renderCodecTable();
+  }
+
+  function resetPlayerView(){
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    revokeObjectURL();
+    if(fileInput) fileInput.value='';
+    infoName.textContent='—';
+    infoResolution.textContent='—';
+    infoDuration.textContent='—';
+    infoCodec.textContent='—';
+    fileMeta.textContent='No file loaded.';
+    playerPanel.hidden=true;
+    uploadSection?.removeAttribute('hidden');
+    playerShell.dataset.state='paused';
+    playerShell.dataset.controls='visible';
+    updatePlayIcon();
   }
 
   function isVideoFile(file){

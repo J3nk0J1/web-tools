@@ -10,9 +10,8 @@
     .panel { margin-bottom: 16px; }
     .dropzone { min-height: 164px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
     .dropzone .meta { color: var(--text-muted); }
-    .player-layout { display:grid; gap:16px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-    @media (max-width: 1080px) { .player-layout { grid-template-columns: 1fr; } }
-    .player-shell { position:relative; background:#000; border-radius:18px; overflow:hidden; box-shadow: var(--shadow-2); }
+    .player-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .player-shell { position:relative; background:#000; border-radius:18px; overflow:hidden; box-shadow: var(--shadow-2); width:100%; }
     .player-shell video { width:100%; height:auto; display:block; background:#000; }
     .player-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; transition:opacity .2s ease; }
     .player-shell[data-state="playing"] .player-overlay { opacity:0; }
@@ -20,7 +19,8 @@
     .center-play { pointer-events:auto; display:inline-flex; align-items:center; justify-content:center; width:82px; height:58px; border-radius:12px; background:rgba(0,0,0,0.8); box-shadow:0 8px 24px rgba(0,0,0,0.45); border:0; cursor:pointer; transition:transform .2s ease, background .2s ease; }
     .center-play:hover { transform:scale(1.08); background:rgba(255,0,0,0.9); }
     .center-play svg { width:32px; height:32px; fill:#fff; }
-    .player-controls { position:absolute; inset-inline:0; bottom:0; padding:28px 24px 16px; display:flex; flex-direction:column; gap:12px; background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 32%, rgba(0,0,0,0.85) 100%); opacity:0; transform:translateY(16px); transition:opacity .18s ease, transform .18s ease; }
+    .player-controls { position:absolute; inset-inline:0; bottom:0; padding:28px 24px 16px; display:flex; flex-direction:column; gap:12px; background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 32%, rgba(0,0,0,0.85) 100%); opacity:0; transform:translateY(16px); transition:opacity .18s ease, transform .18s ease; pointer-events:none; }
+    .player-controls > * { pointer-events:auto; }
     .player-shell:hover .player-controls,
     .player-shell:focus-within .player-controls,
     .player-shell[data-controls="visible"] .player-controls { opacity:1; transform:translateY(0); }
@@ -35,19 +35,19 @@
     .progress-range { position:absolute; inset:0; -webkit-appearance:none; appearance:none; background:none; cursor:pointer; }
     .progress-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:24px; height:24px; background:transparent; border-radius:50%; }
     .progress-range::-moz-range-thumb { width:24px; height:24px; background:transparent; border:0; }
-    .controls-row { display:flex; align-items:center; gap:12px; color:#fff; font-size:.95rem; }
+    .controls-row { display:flex; align-items:center; gap:12px; color:#fff; font-size:.95rem; flex-wrap:wrap; }
     .controls-row button { background:none; border:0; color:inherit; padding:4px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; border-radius:50%; width:38px; height:38px; transition:background .12s ease; }
     .controls-row button:hover,
     .controls-row button:focus-visible { background:rgba(255,255,255,0.18); outline:none; }
     .controls-row button svg { width:24px; height:24px; fill:currentColor; }
     .controls-row .time-display { font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:6px; font-weight:600; }
     .volume-group { display:flex; align-items:center; gap:6px; }
-    .volume-slider { width:110px; accent-color:#ff0000; }
+    .volume-slider { width:140px; accent-color:#ff0000; }
     .volume-slider::-webkit-slider-runnable-track { height:3px; border-radius:999px; background:rgba(255,255,255,0.4); }
     .volume-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; margin-top:-6px; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
     .volume-slider::-moz-range-track { height:3px; border-radius:999px; background:rgba(255,255,255,0.4); }
     .volume-slider::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:#fff; border:0; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
-    .controls-row .spacer { flex:1; }
+    .controls-row .spacer { flex:1; min-width:24px; }
     .menu { position:relative; }
     .menu-panel { position:absolute; bottom:46px; right:0; background:rgba(28,28,28,0.96); color:#fff; border-radius:14px; box-shadow:0 18px 48px rgba(0,0,0,0.4); padding:12px 0; width:200px; display:none; }
     .menu-panel[aria-hidden="false"] { display:block; }
@@ -55,7 +55,7 @@
     .menu-panel button:hover,
     .menu-panel button:focus-visible { background:rgba(255,255,255,0.08); outline:none; }
     .menu-panel button.is-active { background:rgba(255,255,255,0.12); }
-    .info-panel { border:1px solid var(--divider); border-radius:14px; padding:16px; background:color-mix(in oklab, var(--surface) 85%, transparent); display:grid; gap:12px; }
+    .info-panel { border:1px solid var(--divider); border-radius:14px; padding:16px; background:color-mix(in oklab, var(--surface) 85%, transparent); display:grid; gap:12px; margin-top:18px; }
     .info-grid { display:grid; gap:10px; }
     .info-grid .field { display:flex; flex-direction:column; gap:4px; }
     .info-grid .field .label { font-size:.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
@@ -67,10 +67,12 @@
     .badge--ok { background:rgba(46,204,113,0.18); color:#2ecc71; }
     .badge--maybe { background:rgba(241,196,15,0.2); color:#f1c40f; }
     .badge--no { background:rgba(231,76,60,0.18); color:#e74c3c; }
-    .file-meta { font-size:.9rem; color:var(--text-muted); }
+    .file-meta { font-size:.9rem; color:var(--text-muted); margin-top:12px; }
     .player-shell.fullscreen { border-radius:0; }
+    @media (max-width:780px) {
+      .volume-slider { width:110px; }
+    }
     @media (max-width:600px) {
-      .controls-row { flex-wrap:wrap; row-gap:12px; }
       .volume-slider { width:88px; }
     }
   </style>
@@ -98,7 +100,7 @@
   </aside>
 
   <main class="tool-content" role="main">
-    <section class="panel" aria-labelledby="upload-title">
+    <section class="panel" aria-labelledby="upload-title" id="uploadSection">
       <h2 id="upload-title">Open a local video</h2>
       <div id="dropzone" class="dropzone" tabindex="0">
         <p>Drag & drop a video file here, or</p>
@@ -109,97 +111,96 @@
     </section>
 
     <section class="panel" aria-labelledby="player-heading" id="playerPanel" hidden>
-      <div class="player-layout">
-        <div>
-          <h2 id="player-heading" style="margin-bottom:12px">Player</h2>
-          <div class="player-shell" id="playerShell" data-state="paused" data-controls="visible">
-            <video id="video" preload="metadata" tabindex="0"></video>
-            <div class="player-overlay" aria-hidden="true">
-              <button class="center-play" id="overlayPlay" aria-label="Play video">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-              </button>
-            </div>
-            <div class="player-controls" id="playerControls">
-              <div class="progress-wrap">
-                <div class="progress-track"></div>
-                <div class="progress-buffered" id="progressBuffered"></div>
-                <div class="progress-played" id="progressPlayed"></div>
-                <div class="progress-handle" id="progressHandle"></div>
-                <input id="seekBar" class="progress-range" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek timeline" />
-              </div>
-              <div class="controls-row">
-                <button id="playPause" aria-label="Play">
-                  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                </button>
-                <div class="time-display">
-                  <span id="currentTime">0:00</span>
-                  <span>/</span>
-                  <span id="duration">0:00</span>
-                </div>
-                <div class="volume-group">
-                  <button id="muteToggle" aria-label="Mute">
-                    <svg viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4l-5 5H7z"/></svg>
-                  </button>
-                  <input id="volumeSlider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
-                </div>
-                <div class="spacer" aria-hidden="true"></div>
-                <button id="pipButton" aria-label="Toggle Picture-in-Picture" title="Toggle Picture-in-Picture">
-                  <svg viewBox="0 0 24 24"><path d="M19 7H5c-1.1 0-2 .9-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9c0-1.1-.9-2-2-2Zm0 10H5V9h14v8Zm-3-5h-4v3h4v-3Z"/></svg>
-                </button>
-                <div class="menu">
-                  <button id="speedButton" aria-haspopup="true" aria-expanded="false" aria-controls="speedMenu">
-                    <svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 0 0-7 7c0 1.31.35 2.54.96 3.6L4 19h4l1.4-1.4a6.95 6.95 0 0 0 2.6.5 7 7 0 0 0 0-14Zm0 12c-.88 0-1.71-.2-2.46-.54l-.41-.19-.88.88h-1.7l1.6-1.6-.19-.41A5.01 5.01 0 1 1 12 17Zm1-6h2v2h-4V7h2v4Z"/></svg>
-                  </button>
-                  <div id="speedMenu" class="menu-panel" role="menu" aria-hidden="true">
-                    <button type="button" data-speed="0.5">0.5×</button>
-                    <button type="button" data-speed="0.75">0.75×</button>
-                    <button type="button" data-speed="1" class="is-active">1× (Normal)</button>
-                    <button type="button" data-speed="1.25">1.25×</button>
-                    <button type="button" data-speed="1.5">1.5×</button>
-                    <button type="button" data-speed="1.75">1.75×</button>
-                    <button type="button" data-speed="2">2×</button>
-                  </div>
-                </div>
-                <button id="fullscreenButton" aria-label="Toggle fullscreen">
-                  <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3Zm12 3h-3v2h5v-5h-2v3ZM7 7h3V5H5v5h2V7Zm9-2v2h3v3h2V5h-5Z"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <p class="file-meta" id="fileMeta">No file loaded.</p>
-        </div>
-        <aside class="info-panel" aria-labelledby="info-heading">
-          <h2 id="info-heading" style="margin:0">Video diagnostics</h2>
-          <div class="info-grid">
-            <div class="field">
-              <span class="label">Filename</span>
-              <span id="infoName">—</span>
-            </div>
-            <div class="field">
-              <span class="label">Resolution</span>
-              <span id="infoResolution">—</span>
-            </div>
-            <div class="field">
-              <span class="label">Duration</span>
-              <span id="infoDuration">—</span>
-            </div>
-            <div class="field">
-              <span class="label">Codec guess</span>
-              <span id="infoCodec">—</span>
-            </div>
-          </div>
-          <div>
-            <h3 style="margin:8px 0 6px">Codec support (browser)</h3>
-            <table class="codec-table" aria-describedby="codecNote">
-              <thead>
-                <tr><th scope="col">Codec</th><th scope="col">Support</th></tr>
-              </thead>
-              <tbody id="codecTableBody"></tbody>
-            </table>
-            <p class="meta" id="codecNote">Results combine <code>MediaSource</code> and <code>canPlayType</code> probing where available.</p>
-          </div>
-        </aside>
+      <div class="player-header">
+        <h2 id="player-heading">Player</h2>
+        <button id="chooseNewVideo" class="btn btn--secondary" type="button" data-ripple>Choose new video</button>
       </div>
+      <div class="player-shell" id="playerShell" data-state="paused" data-controls="visible">
+        <video id="video" preload="metadata" tabindex="0"></video>
+        <div class="player-overlay" aria-hidden="true">
+          <button class="center-play" id="overlayPlay" aria-label="Play video">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+        </div>
+        <div class="player-controls" id="playerControls">
+          <div class="progress-wrap">
+            <div class="progress-track"></div>
+            <div class="progress-buffered" id="progressBuffered"></div>
+            <div class="progress-played" id="progressPlayed"></div>
+            <div class="progress-handle" id="progressHandle"></div>
+            <input id="seekBar" class="progress-range" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek timeline" />
+          </div>
+          <div class="controls-row">
+            <button id="playPause" aria-label="Play">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div class="time-display">
+              <span id="currentTime">0:00</span>
+              <span>/</span>
+              <span id="duration">0:00</span>
+            </div>
+            <div class="volume-group">
+              <button id="muteToggle" aria-label="Mute">
+                <svg viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4l-5 5H7z"/></svg>
+              </button>
+              <input id="volumeSlider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+            </div>
+            <div class="spacer" aria-hidden="true"></div>
+            <button id="pipButton" aria-label="Toggle Picture-in-Picture" title="Toggle Picture-in-Picture">
+              <svg viewBox="0 0 24 24"><path d="M19 7H5c-1.1 0-2 .9-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9c0-1.1-.9-2-2-2Zm0 10H5V9h14v8Zm-3-5h-4v3h4v-3Z"/></svg>
+            </button>
+            <div class="menu">
+              <button id="speedButton" aria-haspopup="true" aria-expanded="false" aria-controls="speedMenu">
+                <svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 0 0-7 7c0 1.31.35 2.54.96 3.6L4 19h4l1.4-1.4a6.95 6.95 0 0 0 2.6.5 7 7 0 0 0 0-14Zm0 12c-.88 0-1.71-.2-2.46-.54l-.41-.19-.88.88h-1.7l1.6-1.6-.19-.41A5.01 5.01 0 1 1 12 17Zm1-6h2v2h-4V7h2v4Z"/></svg>
+              </button>
+              <div id="speedMenu" class="menu-panel" role="menu" aria-hidden="true">
+                <button type="button" data-speed="0.5">0.5×</button>
+                <button type="button" data-speed="0.75">0.75×</button>
+                <button type="button" data-speed="1" class="is-active">1× (Normal)</button>
+                <button type="button" data-speed="1.25">1.25×</button>
+                <button type="button" data-speed="1.5">1.5×</button>
+                <button type="button" data-speed="1.75">1.75×</button>
+                <button type="button" data-speed="2">2×</button>
+              </div>
+            </div>
+            <button id="fullscreenButton" aria-label="Toggle fullscreen">
+              <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3Zm12 3h-3v2h5v-5h-2v3ZM7 7h3V5H5v5h2V7Zm9-2v2h3v3h2V5h-5Z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="file-meta" id="fileMeta">No file loaded.</p>
+      <aside class="info-panel" aria-labelledby="info-heading">
+        <h2 id="info-heading" style="margin:0">Video diagnostics</h2>
+        <div class="info-grid">
+          <div class="field">
+            <span class="label">Filename</span>
+            <span id="infoName">—</span>
+          </div>
+          <div class="field">
+            <span class="label">Resolution</span>
+            <span id="infoResolution">—</span>
+          </div>
+          <div class="field">
+            <span class="label">Duration</span>
+            <span id="infoDuration">—</span>
+          </div>
+          <div class="field">
+            <span class="label">Codec guess</span>
+            <span id="infoCodec">—</span>
+          </div>
+        </div>
+        <div>
+          <h3 style="margin:8px 0 6px">Codec support (browser)</h3>
+          <table class="codec-table" aria-describedby="codecNote">
+            <thead>
+              <tr><th scope="col">Codec</th><th scope="col">Support</th></tr>
+            </thead>
+            <tbody id="codecTableBody"></tbody>
+          </table>
+          <p class="meta" id="codecNote">Results combine <code>MediaSource</code> and <code>canPlayType</code> probing where available.</p>
+        </div>
+      </aside>
     </section>
   </main>
 
