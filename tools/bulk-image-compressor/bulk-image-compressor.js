@@ -410,11 +410,12 @@
     if (worker) {
       try {
         const buffer = await file.arrayBuffer();
-        return new Promise((resolve, reject) => {
+        const workerPromise = new Promise((resolve, reject) => {
           const id = ++workerTaskId;
           workerTasks.set(id, { resolve, reject });
           worker.postMessage({ id, buffer, type: file.type || 'image/png', format, quality }, [buffer]);
         });
+        return await workerPromise;
       } catch (error) {
         console.warn('Falling back to main-thread compression', error);
       }
