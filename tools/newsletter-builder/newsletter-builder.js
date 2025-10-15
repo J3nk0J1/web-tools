@@ -262,9 +262,13 @@
   function createIntroSection(text){
     const paragraphs=text.split(/\n+/).map(part=>part.trim()).filter(Boolean);
     if(!paragraphs.length) return '';
-    const content=paragraphs.map(par=>`<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3d3d45;">${escapeHtml(par)}</p>`).join('');
+    const content=paragraphs.map((par,index)=>{
+      const isLast=index===paragraphs.length-1;
+      const margin=isLast?'0':'0 0 16px';
+      return `<p style="margin:${margin};font-size:15px;line-height:1.6;color:#3d3d45;">${escapeHtml(par)}</p>`;
+    }).join('');
     return `<tr>
-      <td class="article-body" style="padding:28px 32px 12px;font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+      <td class="article-body" style="padding:28px 32px 20px;font-family:Segoe UI,Helvetica,Arial,sans-serif;">
         ${content}
       </td>
     </tr>`;
@@ -285,16 +289,23 @@
     const safeTitle=article.title?.trim() || `Article ${index+1}`;
     const safeUrl=article.url?.trim();
     const titleMarkup=safeUrl ? `<a href="${escapeAttribute(safeUrl)}" style="color:${linkColour};text-decoration:none;font-weight:700;">${escapeHtml(safeTitle)}</a>` : `<span style="color:${linkColour};font-weight:700;">${escapeHtml(safeTitle)}</span>`;
-    const summary=article.summary?.trim() ? `<p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3d3d45;">${formatMultiline(article.summary.trim())}</p>` : '';
-    const image=article.imageUrl?.trim() ? `<tr>
-      <td style="padding:0 32px 16px;text-align:center;">
-        <img src="${escapeAttribute(article.imageUrl.trim())}" alt="${escapeAttribute(article.imageAlt?.trim() || safeTitle)}" style="width:100%;max-width:100%;display:block;border-radius:6px;" />
-      </td>
-    </tr>` : '';
-    return `${image}<tr>
-      <td class="article-body" style="padding:12px 32px 24px;font-family:Segoe UI,Helvetica,Arial,sans-serif;border-top:1px solid #ebedf5;">
-        <h3 style="margin:0;font-size:18px;line-height:1.4;">${titleMarkup}</h3>
-        ${summary}
+    const summary=article.summary?.trim() ? `<p style="margin:8px 0 0;font-size:15px;line-height:1.6;color:#3d3d45;">${formatMultiline(article.summary.trim())}</p>` : '';
+    const imageUrl=article.imageUrl?.trim();
+    const imageCell=imageUrl ? `<td width="180" style="width:180px;padding:0 24px 0 0;vertical-align:top;" valign="top">
+          <img src="${escapeAttribute(imageUrl)}" alt="${escapeAttribute(article.imageAlt?.trim() || safeTitle)}" style="display:block;width:180px;max-width:100%;height:auto;border-radius:6px;" />
+        </td>` : '';
+    const textCell=`<td width="100%" valign="top" style="width:100%;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#3d3d45;font-size:15px;line-height:1.6;padding:0;vertical-align:top;">
+          <h3 style="margin:0;font-size:18px;line-height:1.4;">${titleMarkup}</h3>
+          ${summary}
+        </td>`;
+    return `<tr>
+      <td class="article-body" style="padding:16px 32px 24px;font-family:Segoe UI,Helvetica,Arial,sans-serif;border-top:1px solid #ebedf5;">
+        <table role="presentation" width="100%" style="border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0;">
+          <tr>
+            ${imageCell}
+            ${textCell}
+          </tr>
+        </table>
       </td>
     </tr>`;
   }
