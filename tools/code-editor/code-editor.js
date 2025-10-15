@@ -1,4 +1,8 @@
 (function(){
+  document.getElementById('backToDashboard')?.addEventListener('click', () => {
+    window.location.href='../../index.html';
+  });
+
   const htmlInput=document.getElementById('htmlInput');
   const cssInput=document.getElementById('cssInput');
   const jsInput=document.getElementById('jsInput');
@@ -75,19 +79,83 @@ if (button) {
     items.forEach(item=>{
       const li=document.createElement('li');
       li.className=`status-item ${item.ok?'ok':'error'}`;
+      li.setAttribute('data-check',item.title.toLowerCase());
+
       const iconSpan=document.createElement('span');
+      iconSpan.className='status-icon';
       iconSpan.setAttribute('aria-hidden','true');
-      iconSpan.textContent=item.ok?'✅':'⚠️';
-      const textWrap=document.createElement('div');
-      const strong=document.createElement('strong');
-      strong.textContent=item.title;
+      iconSpan.textContent=item.ok?'✔︎':'⚠︎';
+
+      const labelSpan=document.createElement('span');
+      labelSpan.className='status-label';
+      labelSpan.textContent=item.title;
+
       const messageSpan=document.createElement('span');
+      messageSpan.className='status-message';
       messageSpan.textContent=item.message;
-      textWrap.append(strong,messageSpan);
-      li.append(iconSpan,textWrap);
+
+      li.append(iconSpan,labelSpan,messageSpan);
+
+      if(item.detail){
+        const detail=document.createElement('code');
+        detail.className='status-detail';
+        detail.textContent=item.detail;
+        li.appendChild(detail);
+      }
+
       fragment.appendChild(li);
     });
     statusList.appendChild(fragment);
+  }
+
+  const collapseWhitespace=str=>str.replace(/\s+/g,' ').trim();
+
+  function parseHTMLParserError(raw){
+    if(!raw) return {message:'Unable to parse HTML.'};
+    const lines=raw.split('\n').map(line=>line.trim()).filter(Boolean);
+    const messageLine=lines.find(line=>/^Error:/i.test(line))||lines[0];
+    const message=messageLine?messageLine.replace(/^Error:\s*/i,'').trim():'Unable to parse HTML.';
+    const lineInfo=lines.find(line=>/^Line(\s|:)/i.test(line));
+    const columnInfo=lines.find(line=>/^Column(\s|:)/i.test(line));
+    const sourceInfo=lines.find(line=>/^Source/i.test(line));
+    const detailParts=[];
+    if(lineInfo) detailParts.push(lineInfo.replace(/^Line\s*:?/i,'Line ').trim());
+    if(columnInfo) detailParts.push(columnInfo.replace(/^Column\s*:?/i,'Column ').trim());
+    if(sourceInfo){
+      const snippet=collapseWhitespace(sourceInfo.replace(/^Source\s*:?/i,'').trim());
+      if(snippet) detailParts.push(`Source: ${snippet.length>120?`${snippet.slice(0,117)}…`:snippet}`);
+    }
+    return {message,detail:detailParts.join(' · ')||undefined};
+  }
+
+  function parseCssError(err){
+    const rawMessage=err&&err.message?err.message:'Unable to parse CSS.';
+    const cleaned=rawMessage.replace(/CSSStyleSheet\\.replaceSync:\s*/,'').trim();
+    const detailParts=[];
+    const locationMatch=cleaned.match(/line\s*(\d+)(?:[,\s]+column\s*(\d+))?/i);
+    if(locationMatch){
+      detailParts.push(`Line ${locationMatch[1]}`);
+      if(locationMatch[2]) detailParts.push(`Column ${locationMatch[2]}`);
+    }
+    const snippetMatch=cleaned.match(/Failed to parse:?\s*([\s\S]+)/i);
+    if(snippetMatch){
+      const snippet=collapseWhitespace(snippetMatch[1]);
+      if(snippet) detailParts.push(snippet.length>120?`${snippet.slice(0,117)}…`:snippet);
+    }
+    const message=cleaned.replace(/Failed to parse:?\s*[\s\S]*/i,'').trim()||'CSS contains a syntax error.';
+    return {message,detail:detailParts.join(' · ')||undefined};
+  }
+
+  function parseJsError(err){
+    const message=err&&err.message?err.message:'JavaScript contains a syntax error.';
+    let detail;
+    if(err&&err.stack){
+      const match=err.stack.match(/anonymous:(\d+):(\d+)/);
+      if(match){
+        detail=`Line ${match[1]}, column ${match[2]}`;
+      }
+    }
+    return {message,detail};
   }
 
   function validateHTML(markup){
@@ -96,44 +164,49 @@ if (button) {
       const parsed=parser.parseFromString(markup,'text/html');
       const errorNode=parsed.querySelector('parsererror');
       if(errorNode){
-        return [{ok:false,title:'HTML issue',message:errorNode.textContent.trim()}];
+        const parsed=parseHTMLParserError(errorNode.textContent||'');
+        return [{ok:false,title:'HTML',message:parsed.message,detail:parsed.detail}];
       }
-      return [{ok:true,title:'HTML looks good',message:'No parsing issues detected.'}];
+      return [{ok:true,title:'HTML',message:'No parsing issues detected.'}];
     }catch(err){
-      return [{ok:false,title:'HTML issue',message:err.message||'Unable to parse HTML.'}];
+      const message=err&&err.message?err.message:'Unable to parse HTML.';
+      return [{ok:false,title:'HTML',message}];
     }
   }
 
   function validateCSS(css){
     if(!css.trim()){
-      return [{ok:true,title:'CSS is empty',message:'Add styles to enhance your page.'}];
+      return [{ok:true,title:'CSS',message:'Stylesheet is empty — add styles to enhance your page.'}];
     }
     if('CSSStyleSheet' in window){
       try{
         const sheet=new CSSStyleSheet();
         sheet.replaceSync(css);
-        return [{ok:true,title:'CSS looks good',message:'Parsed without syntax errors.'}];
+        return [{ok:true,title:'CSS',message:'Parsed without syntax errors.'}];
       }catch(err){
-        return [{ok:false,title:'CSS issue',message:err.message||'Unable to parse CSS.'}];
+        const parsed=parseCssError(err);
+        return [{ok:false,title:'CSS',message:parsed.message,detail:parsed.detail}];
       }
     }
     try{
       document.createElement('style').textContent=css;
-      return [{ok:true,title:'CSS looks good',message:'No syntax errors detected.'}];
+      return [{ok:true,title:'CSS',message:'No syntax errors detected.'}];
     }catch(err){
-      return [{ok:false,title:'CSS issue',message:err.message||'Unable to parse CSS.'}];
+      const parsed=parseCssError(err);
+      return [{ok:false,title:'CSS',message:parsed.message,detail:parsed.detail}];
     }
   }
 
   function validateJS(code){
     if(!code.trim()){
-      return [{ok:true,title:'JavaScript is empty',message:'Add script to bring interactivity.'}];
+      return [{ok:true,title:'JavaScript',message:'Script panel is empty — add code to bring interactivity.'}];
     }
     try{
       new Function(code);
-      return [{ok:true,title:'JavaScript looks good',message:'Parsed without syntax errors.'}];
+      return [{ok:true,title:'JavaScript',message:'Parsed without syntax errors.'}];
     }catch(err){
-      return [{ok:false,title:'JavaScript issue',message:err.message||'Unable to parse JavaScript.'}];
+      const parsed=parseJsError(err);
+      return [{ok:false,title:'JavaScript',message:parsed.message,detail:parsed.detail}];
     }
   }
 
