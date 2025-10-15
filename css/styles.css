@@ -99,6 +99,9 @@ input[type="range"]::-moz-range-thumb{width:18px;height:18px;border:none;border-
 .badge--ok{background:rgba(46,125,50,.18);color:var(--success)}
 .badge--maybe{background:rgba(245,208,66,.18);color:#c49000}
 .badge--no{background:rgba(211,47,47,.18);color:var(--error)}
+.pill-notice{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:6px 12px;border-radius:999px;font-weight:600;background:color-mix(in oklab,var(--error) 16%,transparent);color:var(--error)}
+.pill-notice[aria-hidden="true"]{display:none}
+.pill-notice__icon{font-size:1.1em;line-height:1}
 .settings-layout{display:grid;gap:24px;align-items:start}
 @media (min-width:960px){.settings-layout{grid-template-columns:minmax(280px,1fr) minmax(320px,1fr)}}
 .field-group{display:grid;gap:18px}
