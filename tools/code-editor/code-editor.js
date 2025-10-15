@@ -1,16 +1,14 @@
 (function(){
-  document.getElementById('backToDashboard')?.addEventListener('click', () => {
-    window.location.href='../../index.html';
-  });
+  const backBtn=document.getElementById('backToDashboard');
+  backBtn?.addEventListener('click',()=>{window.location.href='../../index.html';});
 
   const htmlInput=document.getElementById('htmlInput');
   const cssInput=document.getElementById('cssInput');
   const jsInput=document.getElementById('jsInput');
-  const statusList=document.getElementById('statusList');
   const previewFrame=document.getElementById('previewFrame');
   const resetButton=document.getElementById('resetButton');
 
-  if(!htmlInput||!cssInput||!jsInput||!statusList||!previewFrame) return;
+  if(!htmlInput||!cssInput||!jsInput||!previewFrame||!resetButton) return;
 
   const DEFAULT_HTML=`<main class="preview">
   <h1>Hello, playground!</h1>
@@ -60,178 +58,101 @@ if (button) {
 
   const state={html:DEFAULT_HTML,css:DEFAULT_CSS,js:DEFAULT_JS};
 
-  const debounce=(fn,delay=180)=>{
-    let t; return (...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args),delay);};
-  };
-
-  function escapeScript(content){
-    return content.replace(/<\/(script)/gi,'<\\/$1');
-  }
+  const escapeScript=content=>content.replace(/<\/(script)/gi,'<\\/$1');
 
   function updatePreview(){
     const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${state.css}</style></head><body>${state.html}<script>${escapeScript(state.js)}<\/script></body></html>`;
     previewFrame.srcdoc=doc;
   }
 
-  function setStatus(items){
-    statusList.innerHTML='';
-    const fragment=document.createDocumentFragment();
-    items.forEach(item=>{
-      const li=document.createElement('li');
-      li.className=`status-item ${item.ok?'ok':'error'}`;
-      li.setAttribute('data-check',item.title.toLowerCase());
+  function updateLineNumbers(textarea,lineNumbers){
+    const totalLines=(textarea.value.match(/\n/g)||[]).length+1;
+    let output='';
+    for(let i=1;i<=totalLines;i+=1){
+      output+=`${i}\n`;
+    }
+    lineNumbers.textContent=output;
+    lineNumbers.scrollTop=textarea.scrollTop;
+  }
 
-      const iconSpan=document.createElement('span');
-      iconSpan.className='status-icon';
-      iconSpan.setAttribute('aria-hidden','true');
-      iconSpan.textContent=item.ok?'✔︎':'⚠︎';
+  function syncLineNumberHeight(shell,lineNumbers){
+    const height=shell.clientHeight||shell.offsetHeight;
+    if(height){
+      lineNumbers.style.height=`${height}px`;
+    }
+  }
 
-      const labelSpan=document.createElement('span');
-      labelSpan.className='status-label';
-      labelSpan.textContent=item.title;
+  function bindEditor(panel){
+    const textarea=panel.querySelector('textarea');
+    const lineNumbers=panel.querySelector('.editor-line-numbers');
+    const toggle=panel.querySelector('.panel-toggle');
+    const body=panel.querySelector('.editor-panel__body');
+    const shell=panel.querySelector('.editor-shell');
+    if(!textarea||!lineNumbers||!toggle||!body||!shell) return;
 
-      const messageSpan=document.createElement('span');
-      messageSpan.className='status-message';
-      messageSpan.textContent=item.message;
+    const language=panel.dataset.language||textarea.id.replace('Input','').toLowerCase();
+    const labelId=`${language}PanelLabel`;
+    toggle.id=labelId;
+    textarea.setAttribute('aria-labelledby',labelId);
 
-      li.append(iconSpan,labelSpan,messageSpan);
+    const refresh=()=>{
+      updateLineNumbers(textarea,lineNumbers);
+      syncLineNumberHeight(shell,lineNumbers);
+    };
 
-      if(item.detail){
-        const detail=document.createElement('code');
-        detail.className='status-detail';
-        detail.textContent=item.detail;
-        li.appendChild(detail);
-      }
-
-      fragment.appendChild(li);
+    textarea.addEventListener('input',()=>{
+      state[language]=textarea.value;
+      refresh();
+      updatePreview();
     });
-    statusList.appendChild(fragment);
-  }
 
-  const collapseWhitespace=str=>str.replace(/\s+/g,' ').trim();
+    textarea.addEventListener('scroll',()=>{
+      lineNumbers.scrollTop=textarea.scrollTop;
+    });
 
-  function parseHTMLParserError(raw){
-    if(!raw) return {message:'Unable to parse HTML.'};
-    const lines=raw.split('\n').map(line=>line.trim()).filter(Boolean);
-    const messageLine=lines.find(line=>/^Error:/i.test(line))||lines[0];
-    const message=messageLine?messageLine.replace(/^Error:\s*/i,'').trim():'Unable to parse HTML.';
-    const lineInfo=lines.find(line=>/^Line(\s|:)/i.test(line));
-    const columnInfo=lines.find(line=>/^Column(\s|:)/i.test(line));
-    const sourceInfo=lines.find(line=>/^Source/i.test(line));
-    const detailParts=[];
-    if(lineInfo) detailParts.push(lineInfo.replace(/^Line\s*:?/i,'Line ').trim());
-    if(columnInfo) detailParts.push(columnInfo.replace(/^Column\s*:?/i,'Column ').trim());
-    if(sourceInfo){
-      const snippet=collapseWhitespace(sourceInfo.replace(/^Source\s*:?/i,'').trim());
-      if(snippet) detailParts.push(`Source: ${snippet.length>120?`${snippet.slice(0,117)}…`:snippet}`);
+    if(typeof ResizeObserver!=='undefined'){
+      const observer=new ResizeObserver(()=>syncLineNumberHeight(shell,lineNumbers));
+      observer.observe(shell);
+    }else{
+      window.addEventListener('resize',()=>syncLineNumberHeight(shell,lineNumbers));
     }
-    return {message,detail:detailParts.join(' · ')||undefined};
-  }
 
-  function parseCssError(err){
-    const rawMessage=err&&err.message?err.message:'Unable to parse CSS.';
-    const cleaned=rawMessage.replace(/CSSStyleSheet\\.replaceSync:\s*/,'').trim();
-    const detailParts=[];
-    const locationMatch=cleaned.match(/line\s*(\d+)(?:[,\s]+column\s*(\d+))?/i);
-    if(locationMatch){
-      detailParts.push(`Line ${locationMatch[1]}`);
-      if(locationMatch[2]) detailParts.push(`Column ${locationMatch[2]}`);
-    }
-    const snippetMatch=cleaned.match(/Failed to parse:?\s*([\s\S]+)/i);
-    if(snippetMatch){
-      const snippet=collapseWhitespace(snippetMatch[1]);
-      if(snippet) detailParts.push(snippet.length>120?`${snippet.slice(0,117)}…`:snippet);
-    }
-    const message=cleaned.replace(/Failed to parse:?\s*[\s\S]*/i,'').trim()||'CSS contains a syntax error.';
-    return {message,detail:detailParts.join(' · ')||undefined};
-  }
-
-  function parseJsError(err){
-    const message=err&&err.message?err.message:'JavaScript contains a syntax error.';
-    let detail;
-    if(err&&err.stack){
-      const match=err.stack.match(/anonymous:(\d+):(\d+)/);
-      if(match){
-        detail=`Line ${match[1]}, column ${match[2]}`;
+    toggle.addEventListener('click',()=>{
+      const collapsed=panel.classList.toggle('collapsed');
+      body.hidden=collapsed;
+      toggle.setAttribute('aria-expanded',(!collapsed).toString());
+      if(!collapsed){
+        requestAnimationFrame(refresh);
       }
-    }
-    return {message,detail};
+    });
+
+    const collapsed=panel.classList.contains('collapsed');
+    body.hidden=collapsed;
+    toggle.setAttribute('aria-expanded',(!collapsed).toString());
+    refresh();
   }
 
-  function validateHTML(markup){
-    try{
-      const parser=new DOMParser();
-      const parsed=parser.parseFromString(markup,'text/html');
-      const errorNode=parsed.querySelector('parsererror');
-      if(errorNode){
-        const parsed=parseHTMLParserError(errorNode.textContent||'');
-        return [{ok:false,title:'HTML',message:parsed.message,detail:parsed.detail}];
-      }
-      return [{ok:true,title:'HTML',message:'No parsing issues detected.'}];
-    }catch(err){
-      const message=err&&err.message?err.message:'Unable to parse HTML.';
-      return [{ok:false,title:'HTML',message}];
-    }
-  }
+  document.querySelectorAll('.editor-panel').forEach(bindEditor);
 
-  function validateCSS(css){
-    if(!css.trim()){
-      return [{ok:true,title:'CSS',message:'Stylesheet is empty — add styles to enhance your page.'}];
-    }
-    if('CSSStyleSheet' in window){
-      try{
-        const sheet=new CSSStyleSheet();
-        sheet.replaceSync(css);
-        return [{ok:true,title:'CSS',message:'Parsed without syntax errors.'}];
-      }catch(err){
-        const parsed=parseCssError(err);
-        return [{ok:false,title:'CSS',message:parsed.message,detail:parsed.detail}];
-      }
-    }
-    try{
-      document.createElement('style').textContent=css;
-      return [{ok:true,title:'CSS',message:'No syntax errors detected.'}];
-    }catch(err){
-      const parsed=parseCssError(err);
-      return [{ok:false,title:'CSS',message:parsed.message,detail:parsed.detail}];
-    }
-  }
-
-  function validateJS(code){
-    if(!code.trim()){
-      return [{ok:true,title:'JavaScript',message:'Script panel is empty — add code to bring interactivity.'}];
-    }
-    try{
-      new Function(code);
-      return [{ok:true,title:'JavaScript',message:'Parsed without syntax errors.'}];
-    }catch(err){
-      const parsed=parseJsError(err);
-      return [{ok:false,title:'JavaScript',message:parsed.message,detail:parsed.detail}];
-    }
-  }
-
-  function refresh(){
-    const messages=[...validateHTML(state.html),...validateCSS(state.css),...validateJS(state.js)];
-    setStatus(messages);
-    updatePreview();
-  }
-
-  const runRefresh=debounce(refresh,120);
-
-  htmlInput.value=state.html;
-  cssInput.value=state.css;
-  jsInput.value=state.js;
-
-  htmlInput.addEventListener('input',()=>{state.html=htmlInput.value; runRefresh();});
-  cssInput.addEventListener('input',()=>{state.css=cssInput.value; runRefresh();});
-  jsInput.addEventListener('input',()=>{state.js=jsInput.value; runRefresh();});
-
-  resetButton?.addEventListener('click',()=>{
+  function loadDefaults(){
     htmlInput.value=state.html=DEFAULT_HTML;
     cssInput.value=state.css=DEFAULT_CSS;
     jsInput.value=state.js=DEFAULT_JS;
-    refresh();
+    document.querySelectorAll('.editor-panel').forEach(panel=>{
+      const textarea=panel.querySelector('textarea');
+      const lineNumbers=panel.querySelector('.editor-line-numbers');
+      const shell=panel.querySelector('.editor-shell');
+      if(textarea&&lineNumbers&&shell){
+        updateLineNumbers(textarea,lineNumbers);
+        syncLineNumberHeight(shell,lineNumbers);
+      }
+    });
+    updatePreview();
+  }
+
+  resetButton.addEventListener('click',()=>{
+    loadDefaults();
   });
 
-  refresh();
+  loadDefaults();
 })();
