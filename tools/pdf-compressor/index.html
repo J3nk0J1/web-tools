@@ -8,7 +8,6 @@
   <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
   <style>
     .panel { margin-bottom: 16px; }
-    .options-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
     .progress { border:1px solid var(--divider); border-radius:999px; overflow:hidden; height:12px; background:color-mix(in oklab, var(--surface) 70%, var(--divider)); }
     .progress__bar { height:100%; width:0%; background:var(--primary); transition:width .2s ease; }
     .results { display:flex; flex-direction:column; gap:12px; }
@@ -18,13 +17,31 @@
     .actions { display:flex; gap:8px; flex-wrap:wrap; }
     #fileInput { display:none; }
     .badge { display:inline-flex; align-items:center; gap:6px; background:color-mix(in oklab, var(--primary) 18%, transparent); color:var(--primary); border-radius:999px; padding:4px 10px; font-size:.85rem; font-weight:600; }
-    .option-radio { display:flex; gap:8px; align-items:flex-start; }
-    .option-radio input { margin-top:4px; }
+    .settings-layout { display:grid; gap:24px; align-items:start; }
+    @media (min-width: 960px){
+      .settings-layout { grid-template-columns: minmax(280px,1fr) minmax(320px,1fr); }
+    }
+    .field-group { display:grid; gap:18px; }
+    .output-options { display:grid; gap:12px; }
+    .option-card { display:flex; gap:12px; border:1px solid color-mix(in oklab, var(--primary) 24%, transparent); border-radius:14px; padding:14px 16px; background:color-mix(in oklab, var(--primary) 10%, transparent); transition:border-color .2s ease, box-shadow .2s ease; cursor:pointer; }
+    .option-card:focus-within, .option-card:hover { border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent); }
+    .option-card input { margin-top:4px; accent-color:var(--primary); }
+    .option-card__content { display:flex; flex-direction:column; gap:4px; }
+    .option-card__title { font-weight:600; color:var(--text); }
+    .option-card__description { font-size:0.9rem; color:var(--text-muted); }
+    .actions--inline { margin-top:16px; }
     .steps { margin:0; padding-left:20px; display:grid; gap:6px; }
     .steps li { font-weight:500; }
     .callout { border-radius:12px; border:1px solid color-mix(in oklab, var(--primary) 40%, transparent); background:color-mix(in oklab, var(--primary) 12%, transparent); padding:12px 14px; }
     .callout strong { color:var(--primary); }
     .error-banner { display:none; margin:16px auto 0; max-width:1100px; background:color-mix(in oklab, var(--error) 18%, transparent); color:var(--error); border:1px solid color-mix(in oklab, var(--error) 40%, transparent); border-radius:12px; padding:12px 16px; box-shadow:var(--shadow-1); }
+    .notice-bar { max-width:1100px; margin:16px auto 0; padding:10px 14px; border-radius:12px; display:flex; gap:10px; align-items:flex-start; font-size:.95rem; box-shadow:var(--shadow-1); border:1px solid var(--divider); background:color-mix(in oklab, var(--surface) 80%, transparent); }
+    .notice-bar + .notice-bar { margin-top:10px; }
+    .notice-bar__icon { font-size:1.1rem; line-height:1; }
+    .notice-bar__content { margin:0; }
+    .notice-bar__content strong { display:block; font-size:1rem; margin-bottom:2px; }
+    .notice-bar--warning { border-color:color-mix(in oklab, var(--warning-border) 70%, transparent); background:color-mix(in oklab, var(--warning-bg) 75%, transparent); color:var(--warning-text); }
+    .notice-bar--info { border-color:color-mix(in oklab, var(--primary) 18%, transparent); background:color-mix(in oklab, var(--primary) 9%, transparent); color:var(--text); }
     .error-banner[aria-hidden="false"] { display:block; }
   </style>
 </head>
@@ -46,13 +63,13 @@
     </div>
   </header>
 
-  <div id="errorBanner" class="error-banner" role="alert" aria-hidden="true"></div>
-
-  <aside class="warning" role="note" aria-live="polite">
-    <p><strong>⚠️ Important:</strong> This tool is provided as is without warranty or support. Do not contact the ICT service desk; no support will be offered.</p>
+  <aside class="notice-bar notice-bar--warning" role="note" aria-live="polite">
+    <span class="notice-bar__icon" aria-hidden="true">⚠️</span>
+    <p class="notice-bar__content"><strong>Important</strong> This tool is provided as is without warranty or support. Do not contact the ICT service desk; no support will be offered.</p>
   </aside>
-  <aside class="info" role="note" aria-live="polite">
-    <p><strong>ℹ️ Offline Only:</strong> Files never leave this workstation. All processing happens locally in your browser.</p>
+  <aside class="notice-bar notice-bar--info" role="note" aria-live="polite">
+    <span class="notice-bar__icon" aria-hidden="true">ℹ️</span>
+    <p class="notice-bar__content"><strong>Offline only</strong> Files never leave this workstation. All processing happens locally in your browser.</p>
   </aside>
   
 
@@ -84,38 +101,56 @@
     <section class="panel" aria-labelledby="settings-title" id="panel-settings" hidden>
       <h2 id="settings-title">Step 2 – Pick the output</h2>
       <p class="meta" id="inputMeta"></p>
-      <div class="options-grid">
-        <fieldset class="field">
+      <div class="settings-layout">
+        <fieldset class="field field--output">
           <legend>Output format</legend>
-          <div class="meta">Use an access copy for day-to-day collaboration. Switch to the archival choice when submitting records that must stay readable for decades.</div>
-          <label class="meta option-radio">
-            <input type="radio" name="outputType" value="access" checked />
-            <span><strong>Access copy</strong> — Great for email and drafts. Keeps image quality while reducing the file size.</span>
-          </label>
-          <label class="meta option-radio">
-            <input type="radio" name="outputType" value="pdfa" />
-            <span><strong>Archival copy (PDF/A-2b)</strong> — Required for National Archives submissions. Metadata and colour settings are handled for you.</span>
-          </label>
+          <div class="meta">Use an access copy for day-to-day collaboration. Choose archival for the National Archives standard, or custom to fine-tune every setting.</div>
+          <div class="output-options" role="list">
+            <label class="option-card" role="listitem">
+              <input type="radio" name="outputType" value="access" checked />
+              <span class="option-card__content">
+                <span class="option-card__title">Access copy</span>
+                <span class="option-card__description">Balanced for everyday sharing. Applies recommended resolution and quality automatically.</span>
+              </span>
+            </label>
+            <label class="option-card" role="listitem">
+              <input type="radio" name="outputType" value="custom" />
+              <span class="option-card__content">
+                <span class="option-card__title">Custom</span>
+                <span class="option-card__description">Take full control of DPI, JPEG quality and page resizing for unique situations.</span>
+              </span>
+            </label>
+            <label class="option-card" role="listitem">
+              <input type="radio" name="outputType" value="pdfa" />
+              <span class="option-card__content">
+                <span class="option-card__title">Archival copy (PDF/A-2b)</span>
+                <span class="option-card__description">Meets National Archives requirements. Locks preservation friendly settings and embeds metadata.</span>
+              </span>
+            </label>
+          </div>
         </fieldset>
-        <div class="field">
-          <label for="dpi">Rasterisation DPI</label>
-          <input id="dpi" type="range" min="72" max="300" step="6" value="150" />
-          <div class="meta">Current: <span id="dpiLabel">150</span> dpi. Higher numbers are sharper but larger.</div>
-        </div>
-        <div class="field">
-          <label for="quality">JPEG quality</label>
-          <input id="quality" type="range" min="60" max="100" step="5" value="85" />
-          <div class="meta">Current: <span id="qualityLabel">85</span>. Higher values keep more detail at the cost of a bigger file.</div>
-        </div>
-        <div class="field">
-          <label for="downscale">Max long edge (pixels)</label>
-          <input id="downscale" class="input" type="number" min="1000" max="6000" value="3500" />
-          <div class="meta">Optional. Pages larger than this will be proportionally reduced before encoding.</div>
+        <div class="field-group">
+          <div class="field">
+            <label for="dpi">Rasterisation DPI</label>
+            <input id="dpi" type="range" min="72" max="300" step="6" value="150" />
+            <div class="meta">Current: <span id="dpiLabel">150</span> dpi. Higher numbers are sharper but larger.</div>
+          </div>
+          <div class="field">
+            <label for="quality">JPEG quality</label>
+            <input id="quality" type="range" min="60" max="100" step="5" value="85" />
+            <div class="meta">Current: <span id="qualityLabel">85</span>. Higher values keep more detail at the cost of a bigger file.</div>
+          </div>
+          <div class="field">
+            <label for="downscale">Max long edge (pixels)</label>
+            <input id="downscale" class="input" type="number" min="1000" max="6000" value="3500" />
+            <div class="meta">Optional. Pages larger than this will be proportionally reduced before encoding.</div>
+          </div>
         </div>
       </div>
       <p class="meta" id="qualityNotice">Adjust DPI, JPEG quality and maximum page size to balance clarity and size for everyday use.</p>
       <div class="actions">
         <button id="generateBtn" class="btn" data-ripple>Generate output</button>
+        <button class="btn btn--secondary" type="button" id="startOverFromSettings" data-ripple>Start over</button>
       </div>
     </section>
 
@@ -123,7 +158,12 @@
       <h2 id="progress-title">Step 3 – Processing</h2>
       <p class="meta" id="progressStatus" role="status">Waiting…</p>
       <div class="progress" aria-hidden="true"><div class="progress__bar" id="progressBar"></div></div>
+      <div class="actions actions--inline" id="progressActions" hidden>
+        <button class="btn btn--secondary" type="button" id="startOverFromProgress" data-ripple>Start over</button>
+      </div>
     </section>
+
+    <div id="errorBanner" class="error-banner" role="alert" aria-hidden="true"></div>
 
     <section class="panel" aria-labelledby="results-title" id="panel-results" hidden>
       <h2 id="results-title">Step 4 – Download</h2>
