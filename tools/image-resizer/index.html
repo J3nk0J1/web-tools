@@ -50,6 +50,7 @@
             <option value="contain" selected>Contain (keep aspect)</option>
             <option value="exact">Exact (stretch)</option>
           </select>
+          <p class="hint field-hint">"Contain" keeps the original proportions within your target size, while "Exact" stretches to fill the dimensions you provide.</p>
         </div>
         <div class="field">
           <label for="format">Output format</label>
@@ -57,6 +58,7 @@
             <option value="image/jpeg">JPEG (.jpg)</option>
             <option value="image/png" selected>PNG (.png)</option>
           </select>
+          <p class="hint field-hint">Choose JPEG for higher compression or PNG when you need to preserve transparency.</p>
         </div>
         <div class="field">
           <label for="targetWidth">Target width (px)</label>
@@ -122,11 +124,11 @@
             <h3 class="panel-title">Output</h3>
             <canvas id="canvas" class="zoomable" aria-label="Output preview"></canvas>
             <div class="meta" id="outputMeta"></div>
-            <div id="noSavingsNotice" class="pill-notice" role="status" aria-live="polite" aria-hidden="true">
-              <span class="pill-notice__icon" aria-hidden="true">⚠️</span>
-              <span data-role="notice-text">No file size reduction estimated. Try reducing the target dimensions or choose JPEG for stronger compression.</span>
-            </div>
           </div>
+        </div>
+        <div id="noSavingsNotice" class="preview-notice" role="status" aria-live="polite" aria-hidden="true">
+          <span class="preview-notice__icon" aria-hidden="true">⚠️</span>
+          <span class="preview-notice__text" data-role="notice-text">No file size reduction estimated. Try reducing the target dimensions or choose JPEG for stronger compression.</span>
         </div>
       </div>
     </section>
@@ -140,7 +142,6 @@
       </div>
     </section>
 
-    <p class="meta" style="margin-top:16px">Tip: "Contain" preserves aspect ratio within the target width/height. "Exact" stretches to the target size. JPEG offers higher compression; PNG preserves transparency.</p>
   </main>
 
   <script src="../../js/app.js"></script>
