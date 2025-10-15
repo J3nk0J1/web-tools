@@ -6,31 +6,6 @@
   <title>Bulk Image Compressor</title>
   <link rel="stylesheet" href="../../css/styles.css" />
   <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
-  <style>
-    .panel { margin-bottom: 16px; }
-    .dropzone { cursor: pointer; }
-    .dropzone p { margin: 0; }
-    .dropzone__hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
-    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    .settings-grid .field { background: color-mix(in oklab, var(--surface) 96%, transparent); padding: 8px 0; }
-    #qualityWrap { display: flex; flex-direction: column; gap: 6px; }
-    #qualityValue { font-weight: 600; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-    .file-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-    .file-item { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--divider); background: var(--surface); box-shadow: var(--shadow-1); }
-    .file-item__meta { flex: 1 1 220px; min-width: 0; display: grid; gap: 6px; }
-    .file-name { font-weight: 600; margin: 0; word-break: break-word; }
-    .file-status { font-size: 0.9rem; color: var(--text-muted); }
-    .file-sizes { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); }
-    .file-actions { display: flex; gap: 8px; align-items: center; }
-    .chip { display: inline-flex; align-items: center; gap: 6px; background: color-mix(in oklab, var(--primary) 20%, transparent); color: var(--text); border-radius: 999px; padding: 4px 10px; font-size: 0.85rem; }
-    .chip__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.65; }
-    .status-message { margin-top: 12px; color: var(--warning-text); font-weight: 600; }
-    @media (max-width: 720px) {
-      .file-item { flex-direction: column; align-items: flex-start; }
-      .file-actions { width: 100%; justify-content: flex-start; }
-    }
-  </style>
 </head>
 <body>
   <header class="app-bar" role="banner">
@@ -65,7 +40,7 @@
         <input id="fileInput" type="file" accept="image/*" multiple hidden />
         <p class="dropzone__hint">Supported formats include JPG, JPEG and PNG.</p>
       </div>
-      <div id="statusMessage" class="status-message" role="status" aria-live="assertive" hidden></div>
+      <div id="statusMessage" class="status" role="status" aria-live="assertive" hidden></div>
     </section>
 
     <section class="panel" aria-labelledby="settings-title" id="panelSettings">

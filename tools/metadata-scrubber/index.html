@@ -6,25 +6,6 @@
   <title>Metadata Scrubber</title>
   <link rel="stylesheet" href="../../css/styles.css" />
   <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
-  <style>
-    .panel { margin-bottom: 16px; }
-    .layout-2col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-    @media (max-width: 900px) {
-      .layout-2col { grid-template-columns: 1fr; }
-    }
-    figure { margin: 0; display: grid; gap: 12px; }
-    .preview-box { border: 1px solid var(--divider); border-radius: 12px; overflow: hidden; background: var(--surface); display: grid; }
-    .preview-box img { width: 100%; height: auto; display: block; }
-    .meta-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-    .meta-list li { background: color-mix(in oklab, var(--primary) 8%, var(--surface)); border: 1px solid var(--divider); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
-    .meta-list strong { font-weight: 600; }
-    .status { margin-top: 12px; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .info-grid { display: grid; gap: 8px; }
-    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--divider); background: var(--surface); color: var(--text-muted); font-size: 0.88rem; }
-    .chip svg { width: 16px; height: 16px; }
-    .empty-state { border: 1px dashed var(--divider); border-radius: 10px; padding: 12px; text-align: center; color: var(--text-muted); }
-  </style>
 </head>
 <body>
   <header class="app-bar" role="banner">
@@ -64,7 +45,7 @@
     <section class="panel" aria-labelledby="original-title" id="panelOriginal" hidden>
       <h2 id="original-title">Original file</h2>
       <div class="layout-2col">
-        <figure>
+        <figure class="media-figure">
           <div class="preview-box">
             <img id="originalPreview" alt="Original image preview" />
           </div>
@@ -79,6 +60,7 @@
           <h3>Metadata detected</h3>
           <ul id="metadataList" class="meta-list" aria-live="polite"></ul>
           <div id="noMetadata" class="empty-state" hidden>No embedded metadata was found.</div>
+          <p id="safeHint" class="meta" hidden>Select any entries you are allowed to keep. They can be exported separately as a JSON sidecar.</p>
         </div>
       </div>
     </section>
@@ -86,7 +68,7 @@
     <section class="panel" aria-labelledby="scrubbed-title" id="panelScrubbed" hidden>
       <h2 id="scrubbed-title">Scrubbed copy</h2>
       <div class="layout-2col">
-        <figure>
+        <figure class="media-figure">
           <div class="preview-box">
             <img id="scrubbedPreview" alt="Scrubbed image preview" />
           </div>
@@ -99,9 +81,10 @@
           <h3>Removed details</h3>
           <ul id="removedList" class="meta-list" aria-live="polite"></ul>
           <div class="empty-state" id="nothingRemoved" hidden>No metadata needed removal. A clean copy has still been generated.</div>
-          <div class="actions" style="margin-top:12px;">
+          <div class="actions actions--inline">
             <a id="downloadBtn" class="btn" data-ripple download>Download scrubbed image</a>
             <button id="resetBtn" class="btn btn--secondary" type="button" data-ripple>Start over</button>
+            <button id="exportMetadataBtn" class="btn btn--outline" type="button" data-ripple disabled>Download safe fields</button>
           </div>
         </div>
       </div>

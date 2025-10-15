@@ -15,8 +15,10 @@
   const panelResults = document.getElementById('panelResults');
 
   const queue = [];
-  const rippleElements = new Set();
   let isCompressing = false;
+  let worker = null;
+  const workerTasks = new Map();
+  let workerTaskId = 0;
 
   document.getElementById('backToDashboard')?.addEventListener('click', () => {
     window.location.href = '../../index.html';
@@ -113,6 +115,7 @@
     queue.filter(item => item.status === 'done' && item.downloadUrl).forEach(triggerDownload);
   });
 
+  initWorker();
   toggleQuality();
   refreshControls();
 
@@ -204,7 +207,7 @@
           }
           item.outputName = null;
           item.status = 'skipped';
-          item.skipReason = 'Compressed file would be larger than the original.';
+          item.skipReason = `Would grow to ${formatBytes(item.outputSize)} (original ${formatBytes(item.originalSize)}).`;
           skippedCount += 1;
           renderList();
           continue;
@@ -339,7 +342,6 @@
         downloadBtn.download = item.outputName;
         downloadBtn.textContent = 'Download';
         actions.appendChild(downloadBtn);
-        enhanceRipple(downloadBtn);
       } else if (item.status === 'error') {
         const retryBtn = document.createElement('button');
         retryBtn.type = 'button';
@@ -347,7 +349,6 @@
         retryBtn.textContent = 'Retry';
         retryBtn.addEventListener('click', () => retryItem(item));
         actions.appendChild(retryBtn);
-        enhanceRipple(retryBtn);
       } else if (item.status === 'skipped') {
         const retryBtn = document.createElement('button');
         retryBtn.type = 'button';
@@ -355,7 +356,6 @@
         retryBtn.textContent = 'Try again';
         retryBtn.addEventListener('click', () => retryItem(item));
         actions.appendChild(retryBtn);
-        enhanceRipple(retryBtn);
       }
 
       if (actions.childElementCount) {
@@ -404,7 +404,25 @@
     return 'Queued';
   }
 
-  function compressFile(file){
+  async function compressFile(file){
+    const format = getSelectedFormat();
+    const quality = format === 'image/jpeg' ? Number(qualityRange?.value || 80) / 100 : undefined;
+    if (worker) {
+      try {
+        const buffer = await file.arrayBuffer();
+        return new Promise((resolve, reject) => {
+          const id = ++workerTaskId;
+          workerTasks.set(id, { resolve, reject });
+          worker.postMessage({ id, buffer, type: file.type || 'image/png', format, quality }, [buffer]);
+        });
+      } catch (error) {
+        console.warn('Falling back to main-thread compression', error);
+      }
+    }
+    return compressOnMainThread(file, format, quality);
+  }
+
+  function compressOnMainThread(file, format, quality){
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -416,8 +434,6 @@
           canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
-          const format = getSelectedFormat();
-          const quality = format === 'image/jpeg' ? Number(qualityRange?.value || 80) / 100 : undefined;
           canvas.toBlob((blob) => {
             URL.revokeObjectURL(url);
             if (!blob) {
@@ -459,21 +475,16 @@
     if (!statusMessage) return;
     statusMessage.hidden = false;
     statusMessage.textContent = message;
-    if (type === 'error') {
-      statusMessage.style.color = 'var(--error)';
-    } else if (type === 'success') {
-      statusMessage.style.color = 'var(--success)';
-    } else if (type === 'info') {
-      statusMessage.style.color = 'var(--text-muted)';
-    } else {
-      statusMessage.style.color = 'var(--warning-text)';
-    }
+    statusMessage.classList.remove('status--error', 'status--success', 'status--info', 'status--warning');
+    const className = type === 'error' ? 'status--error' : type === 'success' ? 'status--success' : type === 'info' ? 'status--info' : 'status--warning';
+    statusMessage.classList.add(className);
   }
 
   function clearStatus(){
     if (!statusMessage) return;
     statusMessage.hidden = true;
     statusMessage.textContent = '';
+    statusMessage.classList.remove('status--error', 'status--success', 'status--info', 'status--warning');
   }
 
   function formatBytes(bytes){
@@ -488,23 +499,44 @@
     return `${value.toFixed(value >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
   }
 
-  function enhanceRipple(element){
-    if (!element || rippleElements.has(element)) return;
-    element.addEventListener('click', createRipple);
-    rippleElements.add(element);
+  function initWorker(){
+    if (typeof Worker === 'undefined') return;
+    try {
+      worker = new Worker('./bulk-worker.js');
+      worker.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || typeof data.id !== 'number') return;
+        const task = workerTasks.get(data.id);
+        if (!task) return;
+        workerTasks.delete(data.id);
+        if (data.success) {
+          const blob = new Blob([data.buffer], { type: data.type || getSelectedFormat() });
+          task.resolve(blob);
+        } else {
+          task.reject(new Error(data.error || 'Worker compression failed.'));
+          if (data.fatal) {
+            terminateWorker();
+          }
+        }
+      });
+      worker.addEventListener('error', (error) => {
+        console.warn('Compression worker disabled due to error:', error.message);
+        terminateWorker();
+      });
+    } catch (error) {
+      console.warn('Compression worker unavailable', error);
+      worker = null;
+    }
   }
 
-  function createRipple(event){
-    const button = event.currentTarget;
-    if (!button) return;
-    const rect = button.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
-    ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
-    button.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
+  function terminateWorker(){
+    if (worker) {
+      worker.terminate();
+      worker = null;
+    }
+    for (const [id, pending] of workerTasks.entries()) {
+      pending.reject(new Error('Compression worker stopped.'));
+      workerTasks.delete(id);
+    }
   }
 })();
