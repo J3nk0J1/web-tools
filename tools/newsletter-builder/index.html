@@ -7,14 +7,16 @@
   <link rel="stylesheet" href="../../css/styles.css" />
   <link rel="icon" href="../../assets/icons/app-logo.svg" type="image/svg+xml" />
   <style>
-    .newsletter-grid{display:grid;grid-template-columns:minmax(320px,1fr) minmax(380px,1fr);gap:24px;align-items:flex-start}
-    @media (max-width: 1024px){.newsletter-grid{grid-template-columns:1fr}}
+    .newsletter-layout{display:grid;grid-template-columns:minmax(320px,1fr) minmax(420px,1fr);gap:24px;align-items:flex-start;margin-top:24px}
+    .newsletter-layout>.panel{margin:0}
+    @media (max-width: 1120px){.newsletter-layout{grid-template-columns:1fr}}
     .newsletter-editor{display:grid;gap:18px}
     .newsletter-editor .field-row{display:grid;gap:16px}
     .newsletter-editor .field-row--thirds{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
     .newsletter-editor .field-row--halves{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
     .newsletter-editor .field label{font-weight:600;font-size:.9rem;color:var(--text)}
-    .newsletter-editor textarea{min-height:110px;resize:vertical}
+    .newsletter-editor .input,.newsletter-editor textarea,.newsletter-editor select{background:color-mix(in oklab,var(--surface) 94%,transparent);border:1px solid var(--divider);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-1);font-size:.96rem;line-height:1.5}
+    .newsletter-editor textarea{min-height:110px;resize:vertical;padding:14px}
     .newsletter-meta{color:var(--text-muted);font-size:.9rem}
     .newsletter-articles{display:grid;gap:12px}
     .article-card{border:1px solid var(--divider);border-radius:12px;padding:16px;display:grid;gap:14px;background:color-mix(in oklab,var(--surface) 96%,transparent);box-shadow:var(--shadow-1)}
@@ -71,8 +73,10 @@
     <section class="panel" aria-labelledby="builderHeading">
       <h2 id="builderHeading">Compose your newsletter</h2>
       <p class="meta">All changes update the preview automatically. Use the export buttons when you are happy with the layout.</p>
-      <div class="newsletter-grid">
-        <section class="newsletter-editor" aria-label="Newsletter settings">
+    </section>
+
+    <div class="newsletter-layout" role="presentation">
+      <section class="panel newsletter-editor" aria-label="Newsletter settings">
           <div class="field">
             <label for="headerTitle">Header title (single line)</label>
             <input class="input" id="headerTitle" placeholder="Business Unit Name Newsletter" />
@@ -128,9 +132,9 @@
               <input class="input" id="footerLinkUrl" placeholder="mailto:example@example.com" />
             </div>
           </div>
-        </section>
+      </section>
 
-        <section class="newsletter-preview" aria-label="Preview">
+      <section class="panel newsletter-preview" aria-label="Preview">
           <div class="preview-box">
             <div class="preview-box__toolbar">
               <p class="preview-box__message">This preview reflects how the email appears in Outlook 2016.</p>
@@ -143,9 +147,8 @@
             </div>
           </div>
           <p class="status status--info" id="statusMessage" role="status" aria-live="polite" hidden></p>
-        </section>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
   <script src="../../js/app.js"></script>
