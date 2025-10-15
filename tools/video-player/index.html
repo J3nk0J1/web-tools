@@ -32,7 +32,9 @@
     .progress-handle { position:absolute; top:50%; transform:translate(-50%, -50%); width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.6); opacity:0; transition:opacity .12s ease, transform .12s ease; }
     .player-shell:hover .progress-handle,
     .player-shell:focus-within .progress-handle { opacity:1; }
-    .progress-range { position:absolute; inset:0; -webkit-appearance:none; appearance:none; background:none; cursor:pointer; }
+    .progress-range { position:absolute; inset:0; width:100%; height:100%; -webkit-appearance:none; appearance:none; background:none; cursor:pointer; opacity:0; }
+    .progress-range:focus-visible { outline:none; }
+    .progress-wrap:focus-within::after { content:""; position:absolute; inset:-4px; border-radius:999px; border:2px solid rgba(255,255,255,0.7); pointer-events:none; }
     .progress-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:24px; height:24px; background:transparent; border-radius:50%; }
     .progress-range::-moz-range-thumb { width:24px; height:24px; background:transparent; border:0; }
     .progress-range::-webkit-slider-runnable-track { height:4px; background:transparent; border:0; }
