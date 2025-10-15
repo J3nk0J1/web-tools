@@ -66,9 +66,23 @@
           <label for="targetHeight">Target height (px)</label>
           <input id="targetHeight" class="input" type="number" min="1" max="8000" value="768" />
         </div>
-        <div class="field row">
-          <input type="checkbox" id="keepAspect" checked />
-          <label for="keepAspect">Keep aspect ratio</label>
+        <div class="field field--toggle">
+          <label class="toggle-control" for="keepAspect">
+            <input type="checkbox" id="keepAspect" checked />
+            <span class="toggle-control__meta">
+              <span class="toggle-control__title">Keep aspect ratio</span>
+              <span class="toggle-control__description">Lock width and height together so the image never stretches unexpectedly.</span>
+            </span>
+          </label>
+        </div>
+        <div class="field field--toggle">
+          <label class="toggle-control" for="alwaysDownscale">
+            <input type="checkbox" id="alwaysDownscale" checked />
+            <span class="toggle-control__meta">
+              <span class="toggle-control__title">Always downscale</span>
+              <span class="toggle-control__description">Prevent enlarging beyond the original size to keep PNG exports smaller.</span>
+            </span>
+          </label>
         </div>
         <div class="field" id="jpegQualityField">
           <label for="jpegQuality">JPEG quality</label>
