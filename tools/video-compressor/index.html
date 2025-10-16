@@ -70,6 +70,28 @@
           <p class="field-hint">Auto prioritises patent-free WebM/VP9 when quality allows, otherwise falls back to MP4/H.264 for maximum compatibility.</p>
         </div>
         <div class="field">
+          <label for="resolutionSelect">Resolution</label>
+          <select id="resolutionSelect" class="input">
+            <option value="auto">Auto — shrink only if the bitrate is too low</option>
+            <option value="source">Match source resolution</option>
+            <option value="2160p" data-width="3840" data-height="2160">4K UHD (2160p)</option>
+            <option value="1440p" data-width="2560" data-height="1440">1440p (QHD)</option>
+            <option value="1080p" data-width="1920" data-height="1080">1080p (Full HD)</option>
+            <option value="720p" data-width="1280" data-height="720">720p (HD)</option>
+            <option value="540p" data-width="960" data-height="540">540p (qHD)</option>
+            <option value="480p" data-width="854" data-height="480">480p (SD Wide)</option>
+            <option value="360p" data-width="640" data-height="360">360p (SD)</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <div class="field__inline" id="customResolution" hidden>
+            <input id="resolutionWidth" type="number" class="input input--small" min="160" max="7680" step="2" aria-label="Custom width" />
+            <span class="unit" aria-hidden="true">×</span>
+            <input id="resolutionHeight" type="number" class="input input--small" min="160" max="4320" step="2" aria-label="Custom height" />
+            <span class="unit" aria-hidden="true">px</span>
+          </div>
+          <p class="field-hint">Auto mode keeps the original resolution unless the bitrate would fall below visually safe levels. Custom values are rounded to even numbers.</p>
+        </div>
+        <div class="field">
           <label for="targetSize">Target size</label>
           <input id="targetSize" type="number" class="input" min="20" max="100" value="100" step="5" />
           <p class="field-hint">Maximum output size in MB. Values above 100&nbsp;MB may stall thin clients.</p>
@@ -78,6 +100,50 @@
           <label for="safetySlider">Quality bias</label>
           <input id="safetySlider" type="range" min="85" max="98" value="94" />
           <div class="meta">Reserve <span id="safetyLabel">6</span>% headroom to avoid overshooting the target size.</div>
+        </div>
+        <div class="field">
+          <label for="videoBitrateMode">Video bitrate</label>
+          <select id="videoBitrateMode" class="input">
+            <option value="auto">Auto — derive from the target size</option>
+            <option value="manual">Manual override</option>
+          </select>
+          <div class="field__inline" id="videoBitrateManual" hidden>
+            <input id="videoBitrate" type="number" class="input input--small" min="250" max="50000" step="50" aria-describedby="videoBitrateHint" />
+            <span class="unit" aria-hidden="true">Kbps</span>
+          </div>
+          <p class="field-hint" id="videoBitrateHint">Manual mode ignores the target size slider and uses the bitrate you provide.</p>
+        </div>
+        <div class="field">
+          <label for="fpsSelect">Frame rate</label>
+          <select id="fpsSelect" class="input">
+            <option value="auto">Auto — match the detected frame rate</option>
+            <option value="60">60 fps</option>
+            <option value="50">50 fps</option>
+            <option value="48">48 fps</option>
+            <option value="30">30 fps</option>
+            <option value="25">25 fps</option>
+            <option value="24">24 fps</option>
+            <option value="15">15 fps</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <div class="field__inline" id="customFpsWrap" hidden>
+            <input id="fpsInput" type="number" class="input input--small" min="12" max="60" step="1" aria-label="Custom frame rate" />
+            <span class="unit" aria-hidden="true">fps</span>
+          </div>
+          <p class="field-hint">Lower frame rates shrink files but may introduce judder. Values are clamped between 12&nbsp;fps and 60&nbsp;fps.</p>
+        </div>
+        <div class="field">
+          <label for="audioMode">Audio</label>
+          <select id="audioMode" class="input">
+            <option value="auto">Auto — include when detected</option>
+            <option value="force">Force include (even if undetected)</option>
+            <option value="mute">Mute audio</option>
+          </select>
+          <div class="field__inline" id="audioBitrateWrap">
+            <input id="audioBitrate" type="number" class="input input--small" min="32" max="512" step="16" aria-describedby="audioBitrateHint" />
+            <span class="unit" aria-hidden="true">Kbps</span>
+          </div>
+          <p class="field-hint" id="audioBitrateHint">Choose the Opus/AAC bitrate for the output. Set to mute to strip the audio track entirely.</p>
         </div>
         <div class="callout" role="status" aria-live="polite">
           <strong id="etaStrong">Encoding estimate: —</strong>
