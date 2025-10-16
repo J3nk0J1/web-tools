@@ -42,9 +42,27 @@
 
   <main class="container" role="main">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero__content">
-        <h1 id="hero-title" class="hero__title">A refreshed workspace for offline productivity</h1>
-        <p class="hero__subtitle">Launch media, document, and communications tools without leaving the intranet. Everything works offline, with light and dark themes preserved.</p>
+      <div class="hero__grid">
+        <div class="hero__stack">
+          <p class="hero__eyebrow">Toolsuite 3</p>
+          <h1 id="hero-title" class="hero__title">Material You workspace for secure, offline productivity</h1>
+          <p class="hero__subtitle">Launch media, document, and communication utilities without leaving the intranet. Everything is available offline with your preferred theme remembered.</p>
+          <div class="hero__actions">
+            <button class="btn" type="button" data-launcher-open data-ripple>Open launcher</button>
+            <a class="btn btn--tonal" href="#tools-heading" data-ripple>Browse library</a>
+          </div>
+        </div>
+        <article class="hero__supporting" aria-label="What’s included">
+          <h2 class="hero-card__title">Ready when you are</h2>
+          <p class="hero-card__text">Every tool is tuned for offline use, supports drag-and-drop, and respects workspace policies. Pick a workflow below or jump straight into a featured tool.</p>
+          <ul class="hero__highlight-list">
+            <li>• Smart media preparation &amp; compression</li>
+            <li>• Document conversion with archival presets</li>
+            <li>• Live previews that mirror production output</li>
+          </ul>
+        </article>
+      </div>
+      <div class="hero__search-surface">
         <div class="hero__search">
           <label class="search-field" for="toolSearch">
             <span class="search-field__icon" aria-hidden="true">
@@ -57,7 +75,16 @@
           </label>
           <p class="hero__count"><span data-tool-count>8 tools</span> available offline</p>
         </div>
+        <div class="hero__filters" data-category-chips></div>
       </div>
+    </section>
+
+    <section class="tool-section" aria-labelledby="featured-heading">
+      <div class="section-heading">
+        <h2 id="featured-heading">Featured workflows</h2>
+        <p class="section-heading__meta">Hand-picked starting points for creative and communications teams.</p>
+      </div>
+      <div class="tool-carousel" data-featured-grid></div>
     </section>
 
     <section class="tool-section" aria-labelledby="tools-heading">

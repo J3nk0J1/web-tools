@@ -24,12 +24,15 @@
   const cardRegistry=new WeakSet();
   const rippleTargets=new WeakSet();
   let launcherIsBuilt=false;
+  let filterController=null;
 
   initThemeToggle();
   buildToolGrid(tools);
+  initToolSearch();
+  buildFeaturedTools(tools);
+  buildCategoryChips(tools);
   hydrateToolLede(tools);
   initLauncher(tools);
-  initToolSearch();
   initCardNavigation();
   initRippleObserver();
 
@@ -98,8 +101,8 @@
       card.setAttribute('data-tool-card','');
       card.setAttribute('data-card-link',tool.href);
       card.dataset.search=tool.search;
+       card.dataset.category=(tool.category||'tool').toLowerCase();
       card.innerHTML=`
-        <div class="tool-card__backdrop" aria-hidden="true"></div>
         <header class="tool-card__header">
           <span class="tool-card__icon"><img src="${tool.icon}" alt="${tool.name} icon" loading="lazy" /></span>
           <div class="tool-card__meta">
@@ -156,31 +159,200 @@
   function initToolSearch(){
     const searchInput=document.querySelector('[data-tool-search]');
     const emptyState=document.querySelector('[data-search-empty]');
-    if(!searchInput) return;
-
     const cards=Array.from(document.querySelectorAll('[data-tool-card]'));
-    updateToolCount(cards.length);
 
-    const applyFilter=term=>{
-      const value=(term||'').trim().toLowerCase();
+    if(!searchInput){
+      filterController=createNoopFilterController();
+      return;
+    }
+
+    const state={
+      search:searchInput.value || '',
+      category:'all'
+    };
+    const listeners=new Set();
+    let lastVisible=cards.length;
+
+    const notify=()=>{
+      const snapshot={...state,visibleCount:lastVisible};
+      listeners.forEach(listener=>{
+        try{
+          listener(snapshot);
+        }catch(error){
+          console.error(error);
+        }
+      });
+    };
+
+    const applyFilter=()=>{
+      const searchTerm=(state.search||'').trim().toLowerCase();
+      const activeCategory=(state.category||'all').toLowerCase();
       let visible=0;
       cards.forEach(card=>{
         const text=card.dataset.search || '';
-        const match=!value || text.includes(value);
+        const category=(card.dataset.category || '').toLowerCase();
+        const matchesSearch=!searchTerm || text.includes(searchTerm);
+        const matchesCategory=activeCategory==='all' || category===activeCategory;
+        const match=matchesSearch && matchesCategory;
         card.hidden=!match;
         if(match) visible+=1;
       });
+      lastVisible=visible;
       if(emptyState){
         emptyState.hidden=visible!==0;
       }
       updateToolCount(visible);
+      notify();
+    };
+
+    filterController={
+      setSearch(value){
+        state.search=typeof value==='string'?value:(value==null?'':String(value));
+        if(searchInput.value!==state.search){
+          searchInput.value=state.search;
+        }
+        applyFilter();
+      },
+      setCategory(value){
+        const normalized=typeof value==='string'?value.toLowerCase():'all';
+        state.category=normalized && normalized!=='all'?normalized:'all';
+        applyFilter();
+      },
+      getState(){
+        return {...state,visibleCount:lastVisible};
+      },
+      subscribe(fn){
+        if(typeof fn!=='function') return()=>{};
+        listeners.add(fn);
+        fn({...state,visibleCount:lastVisible});
+        return()=>listeners.delete(fn);
+      }
     };
 
     searchInput.addEventListener('input',()=>{
-      applyFilter(searchInput.value);
+      state.search=searchInput.value;
+      applyFilter();
     });
 
-    applyFilter(searchInput.value);
+    applyFilter();
+  }
+
+  function createNoopFilterController(){
+    return{
+      setSearch(){},
+      setCategory(){},
+      getState(){
+        return{search:'',category:'all',visibleCount:0};
+      },
+      subscribe(){
+        return()=>{};
+      }
+    };
+  }
+
+  function buildFeaturedTools(toolset){
+    const carousel=document.querySelector('[data-featured-grid]');
+    if(!carousel || !toolset.length) return;
+
+    carousel.innerHTML='';
+    const preferred=toolset.filter(tool=>tool.featured);
+    const candidates=(preferred.length?preferred:toolset).slice(0,4);
+    const fragment=document.createDocumentFragment();
+    const cards=[];
+
+    candidates.forEach(tool=>{
+      const card=document.createElement('article');
+      card.className='tool-card tool-card--featured';
+      card.dataset.category=(tool.category||'tool').toLowerCase();
+      card.setAttribute('data-card-link',tool.href);
+      card.innerHTML=`
+        <header class="tool-card__header">
+          <span class="tool-card__icon"><img src="${tool.icon}" alt="${tool.name} icon" loading="lazy" /></span>
+          <div class="tool-card__meta">
+            <span class="badge badge--category">${tool.category || 'Tools'}</span>
+            <h3 class="tool-card__title">${tool.name}</h3>
+          </div>
+        </header>
+        <p class="tool-card__description">${tool.description}</p>
+        <footer class="tool-card__footer">
+          <span class="tool-card__hint">Featured</span>
+          <a class="btn" data-ripple href="${tool.href}">Open</a>
+        </footer>
+      `;
+      fragment.appendChild(card);
+      cards.push(card);
+    });
+
+    carousel.appendChild(fragment);
+    hydrateRipples(carousel);
+    initCardNavigation(carousel);
+
+    const syncState=state=>{
+      const active=(state?.category||'all').toLowerCase();
+      cards.forEach(card=>{
+        const category=card.dataset.category || '';
+        const matches=active==='all' || category===active;
+        card.dataset.dimmed=matches?'false':'true';
+      });
+    };
+
+    if(filterController && typeof filterController.subscribe==='function'){
+      filterController.subscribe(syncState);
+    }else{
+      syncState({category:'all'});
+    }
+  }
+
+  function buildCategoryChips(toolset){
+    const container=document.querySelector('[data-category-chips]');
+    if(!container || !toolset.length) return;
+
+    const categories=Array.from(new Set(toolset.map(tool=>tool.category).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    container.innerHTML='';
+
+    const chips=[];
+
+    const createChip=(label,value)=>{
+      const chip=document.createElement('button');
+      chip.type='button';
+      chip.className='filter-chip';
+      chip.dataset.category=value;
+      chip.setAttribute('aria-pressed','false');
+      chip.textContent=label;
+      chip.setAttribute('data-ripple','');
+      chip.addEventListener('click',()=>{
+        if(!filterController) return;
+        const current=filterController.getState?.().category || 'all';
+        const next=current===value?'all':value;
+        filterController.setCategory(next);
+      });
+      container.appendChild(chip);
+      chips.push(chip);
+      return chip;
+    };
+
+    createChip('All tools','all');
+    categories.forEach(category=>{
+      createChip(category,category.toLowerCase());
+    });
+
+    hydrateRipples(container);
+
+    const syncActive=state=>{
+      const active=(state?.category||'all').toLowerCase();
+      chips.forEach(chip=>{
+        const value=chip.dataset.category || 'all';
+        const isActive=active===value;
+        chip.dataset.active=isActive?'true':'false';
+        chip.setAttribute('aria-pressed',isActive?'true':'false');
+      });
+    };
+
+    if(filterController && typeof filterController.subscribe==='function'){
+      filterController.subscribe(syncActive);
+    }else{
+      syncActive({category:'all'});
+    }
   }
 
   function initLauncher(toolset){

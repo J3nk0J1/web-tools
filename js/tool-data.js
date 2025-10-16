@@ -6,7 +6,8 @@ window.INTRANET_TOOLS = [
     category: 'Imagery',
     keywords: ['image', 'resize', 'dimensions', 'preview', 'graphics'],
     href: 'tools/image-resizer/index.html',
-    icon: 'assets/icons/image-resizer.svg'
+    icon: 'assets/icons/image-resizer.svg',
+    featured: true
   },
   {
     id: 'bulk-image-compressor',
@@ -33,7 +34,8 @@ window.INTRANET_TOOLS = [
     category: 'Documents',
     keywords: ['pdf', 'compress', 'archive', 'documents'],
     href: 'tools/pdf-compressor/index.html',
-    icon: 'assets/icons/pdf-compressor.svg'
+    icon: 'assets/icons/pdf-compressor.svg',
+    featured: true
   },
   {
     id: 'video-compressor',
@@ -69,6 +71,7 @@ window.INTRANET_TOOLS = [
     category: 'Communications',
     keywords: ['newsletter', 'email', 'builder', 'design'],
     href: 'tools/newsletter-builder/index.html',
-    icon: 'assets/icons/newsletter-builder.svg'
+    icon: 'assets/icons/newsletter-builder.svg',
+    featured: true
   }
 ];
