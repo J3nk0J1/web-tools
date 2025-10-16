@@ -9,120 +9,75 @@
   <link rel="stylesheet" href="./css/styles.css" />
   <link rel="icon" href="./assets/icons/app-logo.svg" type="image/svg+xml" />
 </head>
-<body>
+<body data-root="." data-page="dashboard">
   <header class="app-bar" role="banner">
     <div class="app-bar__left">
+      <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+          </svg>
+        </span>
+      </button>
       <img src="./assets/icons/app-logo.svg" class="app-logo" alt="Tools logo" />
-      <h1 class="app-title">Intranet Tools</h1>
+      <div class="app-brand">
+        <span class="app-title">Intranet Tools</span>
+        <span class="app-subtitle">Creative suite for secure teams</span>
+      </div>
     </div>
     <div class="app-bar__right">
-      <button id="themeToggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme" data-ripple>
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
         <span class="icon" id="themeIcon" aria-hidden="true"></span>
       </button>
     </div>
   </header>
 
   <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
-    <strong>⚠️ Important:</strong>
-    <span class="notice-bar__text">This toolset is provided <em>as is</em> without warranty or support. Do not contact the ICT service desk; <strong>no support will be offered</strong> for these tools.</span>
+    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
+    <div class="notice-bar__content">
+      <h2 class="notice-bar__title">Important information</h2>
+      <p class="notice-bar__text">This toolkit is provided <em>as is</em> without warranty or support. Please do not contact the ICT service desk—<strong>no support will be offered</strong>.</p>
+    </div>
   </aside>
 
   <main class="container" role="main">
-    <section aria-labelledby="tools-heading">
-      <h2 id="tools-heading" class="sr-only">Available tools</h2>
-      <div class="card-grid">
-        <!-- Image Resizer -->
-        <article class="card" data-card-link="./tools/image-resizer/index.html">
-          <div class="card__media"><img src="./assets/icons/image-resizer.svg" alt="Image Resizer icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Image Resizer</h3>
-            <p class="card__subtitle">Resize images, choose JPG/PNG, adjust quality, and compare with synchronized hover zoom.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/image-resizer/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Bulk Image Compressor -->
-        <article class="card" data-card-link="./tools/bulk-image-compressor/index.html">
-          <div class="card__media"><img src="./assets/icons/bulk-image-compressor.svg" alt="Bulk Image Compressor icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Bulk Image Compressor</h3>
-            <p class="card__subtitle">Compress up to 10 images at once, select JPG or PNG output, and download renamed results automatically.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/bulk-image-compressor/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Metadata Scrubber -->
-        <article class="card" data-card-link="./tools/metadata-scrubber/index.html">
-          <div class="card__media"><img src="./assets/icons/metadata-scrubber.svg" alt="Metadata Scrubber icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Metadata Scrubber</h3>
-            <p class="card__subtitle">Inspect and remove EXIF/GPS metadata from images before sharing them offline.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/metadata-scrubber/index.html">Open</a>
-          </div>
-        </article>
-        <!-- PDF Compressor -->
-        <article class="card" data-card-link="./tools/pdf-compressor/index.html">
-          <div class="card__media"><img src="./assets/icons/pdf-compressor.svg" alt="PDF compressor icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">PDF Compressor</h3>
-            <p class="card__subtitle">Create access copies or archival PDF/A-2b files offline using ZIP structure streams and JPEG imagery.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/pdf-compressor/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Video Compressor -->
-        <article class="card" data-card-link="./tools/video-compressor/index.html">
-          <div class="card__media"><img src="./assets/icons/video-compressor.svg" alt="Video Compressor icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Video Compressor</h3>
-            <p class="card__subtitle">Shrink videos under 100&nbsp;MB with automatic bitrate, resolution, and format tuning for offline playback.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/video-compressor/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Offline Video Player -->
-        <article class="card" data-card-link="./tools/video-player/index.html">
-          <div class="card__media"><img src="./assets/icons/video-player.svg" alt="Video Player icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Offline Video Player</h3>
-            <p class="card__subtitle">Play local video files with a YouTube-inspired interface and detailed codec diagnostics.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/video-player/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Code Playground -->
-        <article class="card" data-card-link="./tools/code-editor/index.html">
-          <div class="card__media"><img src="./assets/icons/code-playground.svg" alt="Code Playground icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Code Playground</h3>
-            <p class="card__subtitle">Experiment with HTML, CSS, and JavaScript with instant validation and live preview.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/code-editor/index.html">Open</a>
-          </div>
-        </article>
-        <!-- Newsletter Builder -->
-        <article class="card" data-card-link="./tools/newsletter-builder/index.html">
-          <div class="card__media"><img src="./assets/icons/newsletter-builder.svg" alt="Newsletter Builder icon" /></div>
-          <div class="card__body">
-            <h3 class="card__title">Newsletter Builder</h3>
-            <p class="card__subtitle">Draft Outlook-friendly email newsletters with a visual editor, live preview, and downloadable HTML.</p>
-          </div>
-          <div class="card__actions">
-            <a class="btn" data-ripple href="./tools/newsletter-builder/index.html">Open</a>
-          </div>
-        </article>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__content">
+        <h1 id="hero-title" class="hero__title">A refreshed workspace for offline productivity</h1>
+        <p class="hero__subtitle">Launch media, document, and communications tools without leaving the intranet. Everything works offline, with light and dark themes preserved.</p>
+        <div class="hero__search">
+          <label class="search-field" for="toolSearch">
+            <span class="search-field__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </span>
+            <input id="toolSearch" data-tool-search type="search" placeholder="Search tools by name or workflow" autocomplete="off" />
+          </label>
+          <p class="hero__count"><span data-tool-count>8 tools</span> available offline</p>
+        </div>
       </div>
+    </section>
+
+    <section class="tool-section" aria-labelledby="tools-heading">
+      <div class="section-heading">
+        <h2 id="tools-heading">Available tools</h2>
+        <p class="section-heading__meta">Browse everything or open the launcher for quick switching.</p>
+      </div>
+      <div class="tool-grid" data-tool-grid></div>
+      <p class="empty-state" data-search-empty hidden>No tools match your search. Try a different keyword or clear the filter.</p>
     </section>
   </main>
 
+  <noscript>
+    <div class="notice-bar notice-bar--inline">
+      <div class="notice-bar__icon" aria-hidden="true">ℹ️</div>
+      <p class="notice-bar__text">Enable JavaScript to populate the tools list and use the refreshed interface.</p>
+    </div>
+  </noscript>
+
+  <script src="./js/tool-data.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>

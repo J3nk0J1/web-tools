@@ -1,12 +1,396 @@
-
-// app.js — theme toggle & ripple
+// app.js — shared UI behaviours, theme switching, launcher, and card hydration
 (function(){
-  const root=document.documentElement; const toggle=document.getElementById('themeToggle'); const icon=document.getElementById('themeIcon');
-  const apply=(m)=>{root.setAttribute('data-theme',m==='dark'?'dark':'light'); localStorage.setItem('theme',m); setIcon(m);} ;
-  const setIcon=(m)=>{ if(!icon) return; const dark=m==='dark'; icon.innerHTML = dark?`<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M9.37 5.51a7 7 0 0 0 9.12 9.12 8 8 0 1 1-9.12-9.12z"/></svg>`:`<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79L3.17 4.83l1.79 1.8 1.8-1.79zm10.48 0l1.79-1.79 1.79 1.79-1.79 1.8-1.79-1.8zM12 2v3m0 14v3M4 13H1v-2h3m19 0h-3v-2h3M6.76 19.16l-1.8 1.79-1.79-1.79 1.79-1.8 1.8 1.8zM19.24 19.16l1.79 1.79 1.79-1.79-1.79-1.8-1.79 1.8zM12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>`; };
-  const saved=localStorage.getItem('theme'); const prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; apply(saved|| (prefersDark?'dark':'light'));
-  toggle?.addEventListener('click',()=>{const cur=root.getAttribute('data-theme')==='dark'?'dark':'light'; apply(cur==='dark'?'light':'dark');});
+  const root=document.documentElement;
+  const body=document.body;
+  const dataset=body?.dataset ?? {};
+  const base=normalizeBase(dataset.root || '.');
+  const protocolRegex=/^[a-z]+:/i;
+
+  const rawTools=Array.isArray(window.INTRANET_TOOLS)?window.INTRANET_TOOLS:[];
+  const tools=rawTools.map(tool=>{
+    const keywords=Array.isArray(tool.keywords)?tool.keywords:[];
+    const searchTokens=[tool.name,tool.description,tool.category||'',...keywords]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return {
+      ...tool,
+      href:resolvePath(tool.href),
+      icon:resolvePath(tool.icon),
+      search:searchTokens
+    };
+  });
+
+  const cardRegistry=new WeakSet();
   const rippleTargets=new WeakSet();
+  let launcherIsBuilt=false;
+
+  initThemeToggle();
+  buildToolGrid(tools);
+  hydrateToolLede(tools);
+  initLauncher(tools);
+  initToolSearch();
+  initCardNavigation();
+  initRippleObserver();
+
+  function normalizeBase(value){
+    if(!value||value==='.'||value==='./') return '.';
+    return value.replace(/\/+$/,'');
+  }
+
+  function resolvePath(path){
+    if(!path) return '#';
+    const value=String(path);
+    if(protocolRegex.test(value) || value.startsWith('#')){
+      return value;
+    }
+    if(value.startsWith('/')){
+      return value;
+    }
+    const cleaned=value.replace(/^\.\/+/, '').replace(/^\/+/, '');
+    if(base==='.'){
+      return cleaned ? `./${cleaned}`.replace(/^\.\//,'./') : '.';
+    }
+    if(!cleaned){
+      return base;
+    }
+    return `${base}/${cleaned}`.replace(/\/{2,}/g,'/');
+  }
+
+  function initThemeToggle(){
+    const toggle=document.getElementById('themeToggle');
+    const icon=document.getElementById('themeIcon');
+    if(!toggle || !root) return;
+
+    const sunIcon='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m6.36 1.64-1.42 1.42M22 12h-2m-1.64 6.36-1.42-1.42M12 20v2M6.36 18.36 4.94 19.78M4 12H2m3.64-6.36L7.06 7.06"/></svg>';
+    const moonIcon='<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 1 0 21 12.79z"/></svg>';
+
+    const applyTheme=mode=>{
+      const theme=mode==='dark'?'dark':'light';
+      root.setAttribute('data-theme',theme);
+      localStorage.setItem('theme',theme);
+      if(icon){
+        icon.innerHTML=theme==='dark'?moonIcon:sunIcon;
+      }
+      toggle.setAttribute('aria-pressed',theme==='dark'?'true':'false');
+      toggle.setAttribute('title',theme==='dark'?'Switch to light theme':'Switch to dark theme');
+    };
+
+    const saved=localStorage.getItem('theme');
+    const prefersDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(saved || (prefersDark?'dark':'light'));
+
+    toggle.addEventListener('click',()=>{
+      const current=root.getAttribute('data-theme')==='dark'?'dark':'light';
+      applyTheme(current==='dark'?'light':'dark');
+    });
+  }
+
+  function buildToolGrid(toolset){
+    const grid=document.querySelector('[data-tool-grid]');
+    if(!grid || !toolset.length) return;
+    grid.innerHTML='';
+    const fragment=document.createDocumentFragment();
+
+    toolset.forEach(tool=>{
+      const card=document.createElement('article');
+      card.className='tool-card';
+      card.setAttribute('data-tool-card','');
+      card.setAttribute('data-card-link',tool.href);
+      card.dataset.search=tool.search;
+      card.innerHTML=`
+        <div class="tool-card__backdrop" aria-hidden="true"></div>
+        <header class="tool-card__header">
+          <span class="tool-card__icon"><img src="${tool.icon}" alt="${tool.name} icon" loading="lazy" /></span>
+          <div class="tool-card__meta">
+            <span class="badge badge--category">${tool.category || 'Tools'}</span>
+            <h3 class="tool-card__title">${tool.name}</h3>
+          </div>
+        </header>
+        <p class="tool-card__description">${tool.description}</p>
+        <footer class="tool-card__footer">
+          <span class="tool-card__hint">Offline ready</span>
+          <a class="btn btn--surface" data-ripple href="${tool.href}">Open</a>
+        </footer>
+      `;
+      fragment.appendChild(card);
+    });
+
+    grid.appendChild(fragment);
+    hydrateRipples(grid);
+    initCardNavigation(grid);
+    updateToolCount(toolset.length);
+  }
+
+  function updateToolCount(count){
+    const countLabel=document.querySelector('[data-tool-count]');
+    if(!countLabel) return;
+    const value=Number.isFinite(count)?count:0;
+    countLabel.textContent=`${value} tool${value===1?'':'s'}`;
+  }
+
+  function hydrateToolLede(toolset){
+    const lede=document.querySelector('[data-tool-lede]');
+    if(!lede) return;
+    const toolId=lede.getAttribute('data-tool-id');
+    const tool=toolset.find(item=>item.id===toolId);
+    if(!tool){
+      lede.remove();
+      return;
+    }
+    lede.innerHTML=`
+      <span class="tool-lede__icon" aria-hidden="true"><img src="${tool.icon}" alt="" /></span>
+      <div class="tool-lede__content">
+        <span class="badge badge--category">${tool.category || 'Tool'}</span>
+        <h1 class="tool-lede__title">${tool.name}</h1>
+        <p class="tool-lede__description">${tool.description}</p>
+      </div>
+    `;
+    const iconImg=lede.querySelector('img');
+    if(iconImg){
+      iconImg.alt=`${tool.name} icon`;
+      iconImg.decoding='async';
+    }
+  }
+
+  function initToolSearch(){
+    const searchInput=document.querySelector('[data-tool-search]');
+    const emptyState=document.querySelector('[data-search-empty]');
+    if(!searchInput) return;
+
+    const cards=Array.from(document.querySelectorAll('[data-tool-card]'));
+    updateToolCount(cards.length);
+
+    const applyFilter=term=>{
+      const value=(term||'').trim().toLowerCase();
+      let visible=0;
+      cards.forEach(card=>{
+        const text=card.dataset.search || '';
+        const match=!value || text.includes(value);
+        card.hidden=!match;
+        if(match) visible+=1;
+      });
+      if(emptyState){
+        emptyState.hidden=visible!==0;
+      }
+      updateToolCount(visible);
+    };
+
+    searchInput.addEventListener('input',()=>{
+      applyFilter(searchInput.value);
+    });
+
+    applyFilter(searchInput.value);
+  }
+
+  function initLauncher(toolset){
+    if(launcherIsBuilt) return;
+    const triggers=Array.from(document.querySelectorAll('[data-launcher-open]'));
+    if(!triggers.length || !toolset.length || !body) return;
+
+    const overlay=document.createElement('div');
+    overlay.className='app-launcher';
+    overlay.setAttribute('aria-hidden','true');
+    overlay.innerHTML=`
+      <div class="app-launcher__backdrop" data-launcher-close></div>
+      <div class="app-launcher__panel" role="dialog" aria-modal="true" aria-labelledby="launcherTitle" tabindex="-1">
+        <header class="app-launcher__header">
+          <h2 id="launcherTitle">Quick launcher</h2>
+          <button class="icon-btn" type="button" data-launcher-close aria-label="Close launcher" title="Close launcher" data-ripple>
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M6 18 18 6"/></svg>
+            </span>
+          </button>
+        </header>
+        <div class="app-launcher__search">
+          <label class="search-field" for="launcherSearch">
+            <span class="search-field__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </span>
+            <input id="launcherSearch" data-launcher-search type="search" placeholder="Search tools" autocomplete="off" />
+          </label>
+        </div>
+        <div class="app-launcher__body">
+          <div class="app-launcher__list" data-launcher-list role="list"></div>
+          <p class="app-launcher__empty" data-launcher-empty hidden>No tools matched your search.</p>
+        </div>
+      </div>
+    `;
+
+    body.appendChild(overlay);
+    hydrateRipples(overlay);
+
+    const panel=overlay.querySelector('.app-launcher__panel');
+    const closeEls=overlay.querySelectorAll('[data-launcher-close]');
+    const searchInput=overlay.querySelector('[data-launcher-search]');
+    const list=overlay.querySelector('[data-launcher-list]');
+    const empty=overlay.querySelector('[data-launcher-empty]');
+    const backdrop=overlay.querySelector('.app-launcher__backdrop');
+
+    if(!panel || !list || !searchInput) return;
+
+    if(!panel.id){
+      panel.id='appLauncherPanel';
+    }
+    const panelId=panel.id;
+
+    toolset.forEach(tool=>{
+      const item=document.createElement('a');
+      item.className='launcher-item';
+      item.setAttribute('data-launcher-item','');
+      item.setAttribute('role','listitem');
+      item.href=tool.href;
+      item.dataset.search=tool.search;
+      item.innerHTML=`
+        <span class="launcher-item__icon"><img src="${tool.icon}" alt="" aria-hidden="true" /></span>
+        <span class="launcher-item__text">
+          <span class="launcher-item__title">${tool.name}</span>
+          <span class="launcher-item__meta">${tool.category || 'Tool'} · Offline ready</span>
+        </span>
+        <span class="launcher-item__arrow" aria-hidden="true">→</span>
+      `;
+      list.appendChild(item);
+    });
+
+    const trapFocus=event=>{
+      if(event.key!=='Tab') return;
+      const focusables=listFocusables(panel);
+      if(!focusables.length) return;
+      const first=focusables[0];
+      const last=focusables[focusables.length-1];
+      if(event.shiftKey){
+        if(document.activeElement===first){
+          event.preventDefault();
+          last.focus();
+        }
+      } else if(document.activeElement===last){
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    let lastFocus=null;
+
+    const openLauncher=()=>{
+      lastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+      overlay.classList.add('is-open');
+      overlay.setAttribute('aria-hidden','false');
+      body?.classList.add('is-launcher-open');
+      searchInput.value='';
+      filterLauncher('');
+      window.setTimeout(()=>searchInput.focus(),50);
+      panel.addEventListener('keydown',trapFocus);
+      document.addEventListener('keydown',handleEscape,true);
+      triggers.forEach(trigger=>trigger.setAttribute('aria-expanded','true'));
+    };
+
+    const closeLauncher=()=>{
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden','true');
+      body?.classList.remove('is-launcher-open');
+      panel.removeEventListener('keydown',trapFocus);
+      document.removeEventListener('keydown',handleEscape,true);
+      if(lastFocus && typeof lastFocus.focus==='function'){
+        window.setTimeout(()=>lastFocus.focus(),50);
+      }
+      triggers.forEach(trigger=>trigger.setAttribute('aria-expanded','false'));
+    };
+
+    const handleEscape=event=>{
+      if(event.key==='Escape'){
+        event.preventDefault();
+        closeLauncher();
+      }
+    };
+
+    const filterLauncher=term=>{
+      const value=(term||'').toLowerCase().trim();
+      let visible=0;
+      list.querySelectorAll('[data-launcher-item]').forEach(item=>{
+        const text=item.dataset.search || '';
+        const match=!value || text.includes(value);
+        item.hidden=!match;
+        if(match) visible+=1;
+      });
+      if(empty){
+        empty.hidden=visible!==0;
+      }
+    };
+
+    searchInput.addEventListener('input',()=>filterLauncher(searchInput.value));
+
+    closeEls.forEach(btn=>{
+      btn.addEventListener('click',closeLauncher);
+    });
+    backdrop?.addEventListener('click',closeLauncher);
+
+    triggers.forEach(trigger=>{
+      trigger.setAttribute('aria-controls',panelId);
+      trigger.setAttribute('aria-expanded','false');
+      trigger.addEventListener('click',openLauncher);
+      trigger.addEventListener('keydown',event=>{
+        if(event.key==='Enter' || event.key===' '){
+          event.preventDefault();
+          openLauncher();
+        }
+      });
+    });
+
+    launcherIsBuilt=true;
+  }
+
+  function listFocusables(container){
+    if(!container) return [];
+    const selectors=['a[href]','button:not([disabled])','input:not([disabled])','textarea:not([disabled])','select:not([disabled])','[tabindex]:not([tabindex="-1"])'];
+    return Array.from(container.querySelectorAll(selectors.join(','))).filter(el=>!el.hasAttribute('hidden'));
+  }
+
+  function initCardNavigation(scope=document){
+    scope.querySelectorAll?.('[data-card-link]').forEach(card=>{
+      if(!(card instanceof HTMLElement)) return;
+      if(cardRegistry.has(card)) return;
+      cardRegistry.add(card);
+      const href=card.getAttribute('data-card-link');
+      if(!href) return;
+      card.setAttribute('role','link');
+      card.setAttribute('tabindex','0');
+      card.classList.add('is-interactive');
+      card.addEventListener('click',event=>{
+        if(event.target instanceof Element && event.target.closest('a,button')) return;
+        window.location.href=href;
+      });
+      card.addEventListener('keydown',event=>{
+        if(event.key==='Enter' || event.key===' '){
+          event.preventDefault();
+          window.location.href=href;
+        }
+      });
+    });
+  }
+
+  function initRippleObserver(){
+    hydrateRipples();
+    const observer=new MutationObserver(mutations=>{
+      for(const mutation of mutations){
+        mutation.addedNodes.forEach(node=>{
+          if(!(node instanceof Element)) return;
+          hydrateRipples(node);
+          initCardNavigation(node);
+        });
+      }
+    });
+    if(document.body){
+      observer.observe(document.body,{childList:true,subtree:true});
+    }
+  }
+
+  function hydrateRipples(scope=document){
+    scope.querySelectorAll?.('.btn,[data-ripple],.icon-btn').forEach(attachRipple);
+  }
+
   function attachRipple(el){
     if(!el || rippleTargets.has(el)) return;
     rippleTargets.add(el);
@@ -14,11 +398,12 @@
     ripple.className='ripple';
     el.appendChild(ripple);
     let timeout=null;
-    const trigger=(event)=>{
-      if(el.disabled||el.getAttribute?.('aria-disabled')==='true') return;
+    const trigger=event=>{
+      if(el.disabled || el.getAttribute?.('aria-disabled')==='true') return;
       const rect=el.getBoundingClientRect();
       const size=Math.hypot(rect.width,rect.height);
-      let x=rect.width/2; let y=rect.height/2;
+      let x=rect.width/2;
+      let y=rect.height/2;
       if(event && 'clientX' in event){
         x=event.clientX-rect.left;
         y=event.clientY-rect.top;
@@ -27,48 +412,21 @@
       ripple.style.setProperty('--ripple-x',`${x}px`);
       ripple.style.setProperty('--ripple-y',`${y}px`);
       ripple.classList.remove('is-active');
-      // force reflow to restart animation
       void ripple.offsetWidth;
       ripple.classList.add('is-active');
-      if(timeout){ cancelAnimationFrame(timeout); timeout=null; }
+      if(timeout){
+        cancelAnimationFrame(timeout);
+        timeout=null;
+      }
       timeout=requestAnimationFrame(()=>{
         window.setTimeout(()=>ripple.classList.remove('is-active'),450);
       });
     };
-    el.addEventListener('pointerdown',trigger,{ passive:true });
+    el.addEventListener('pointerdown',trigger,{passive:true});
     el.addEventListener('keydown',evt=>{
-      if(evt.key==='Enter'||evt.key===' '){ trigger(); }
+      if(evt.key==='Enter' || evt.key===' '){
+        trigger();
+      }
     });
   }
-
-  function hydrateRipples(root=document){
-    root.querySelectorAll?.('.btn,[data-ripple],.icon-btn').forEach(attachRipple);
-  }
-
-  hydrateRipples();
-  const observer=new MutationObserver(mutations=>{
-    for(const mutation of mutations){
-      mutation.addedNodes.forEach(node=>{
-        if(!(node instanceof Element)) return;
-        if(node.matches('.btn,[data-ripple],.icon-btn')) attachRipple(node);
-        hydrateRipples(node);
-      });
-    }
-  });
-  if(document.body){ observer.observe(document.body,{childList:true,subtree:true}); }
-
-  document.querySelectorAll('[data-card-link]').forEach(card=>{
-    const href=card.getAttribute('data-card-link');
-    if(!href) return;
-    card.setAttribute('role','link');
-    card.setAttribute('tabindex','0');
-    card.classList.add('card--interactive');
-    card.addEventListener('click',evt=>{
-      if(evt.target instanceof Element && evt.target.closest('a,button')) return;
-      window.location.href=href;
-    });
-    card.addEventListener('keydown',evt=>{
-      if(evt.key==='Enter'||evt.key===' '){ evt.preventDefault(); window.location.href=href; }
-    });
-  });
 })();
