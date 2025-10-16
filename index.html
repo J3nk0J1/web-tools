@@ -27,20 +27,13 @@
         </div>
       </div>
       <div class="app-bar__right">
+        <button class="app-bar__about-btn" type="button" data-about-open data-ripple>About</button>
         <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
           <span class="icon" id="themeIcon" aria-hidden="true"></span>
         </button>
       </div>
     </div>
   </header>
-
-  <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
-    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
-    <div class="notice-bar__content">
-      <h2 class="notice-bar__title">Important information</h2>
-      <p class="notice-bar__text">This toolkit is provided <em>as is</em> without warranty or support. Please do not contact the ICT service desk—<strong>no support will be offered</strong>.</p>
-    </div>
-  </aside>
 
   <main class="container" role="main">
     <section class="hero" aria-labelledby="hero-title">
@@ -54,15 +47,6 @@
             <a class="btn btn--tonal" href="#tools-heading" data-ripple>Browse library</a>
           </div>
         </div>
-        <article class="hero__supporting" aria-label="What’s included">
-          <h2 class="hero-card__title">Ready when you sign in</h2>
-          <p class="hero-card__text">Every app is tuned for offline use, supports drag-and-drop, and respects workspace policies. Start with a featured workflow or jump right into the library.</p>
-          <ul class="hero__highlight-list">
-            <li>Smart media preparation &amp; compression</li>
-            <li>Document conversion with archival presets</li>
-            <li>Live previews that mirror production output</li>
-          </ul>
-        </article>
       </div>
       <div class="hero__search-surface">
         <div class="hero__search">
@@ -98,6 +82,31 @@
       <p class="empty-state" data-search-empty hidden>No tools match your search. Try a different keyword or clear the filter.</p>
     </section>
   </main>
+
+  <dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutDialogTitle">
+    <form method="dialog" class="about-dialog__surface">
+      <header class="about-dialog__header">
+        <h2 id="aboutDialogTitle">About this toolset</h2>
+        <button type="button" class="icon-btn about-dialog__close" data-about-close aria-label="Close about dialog" title="Close about dialog" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M18.3 5.71 12 12.01l-6.3-6.3-1.42 1.42 6.3 6.29-6.3 6.3 1.42 1.42 6.3-6.3 6.3 6.3 1.41-1.42-6.29-6.3 6.29-6.29-1.41-1.42z" />
+            </svg>
+          </span>
+        </button>
+      </header>
+      <div class="about-dialog__content">
+        <ol class="about-dialog__list">
+          <li>This toolset and all tools within it operate locally in the browser. No internet connectivity is required and there are no external dependencies.</li>
+          <li>This toolset and all tools within it are provided as is without warranty or support.</li>
+          <li>Do not contact the ICT service desk to request support, as none will be offered.</li>
+        </ol>
+      </div>
+      <div class="about-dialog__actions">
+        <button type="submit" class="btn btn--surface" data-about-close data-ripple>Got it</button>
+      </div>
+    </form>
+  </dialog>
 
   <noscript>
     <div class="notice-bar notice-bar--inline">

@@ -34,6 +34,7 @@
   hydrateToolLede(tools);
   initLauncher(tools);
   initCardNavigation();
+  initAboutDialog();
   initRippleObserver();
 
   function normalizeBase(value){
@@ -539,6 +540,64 @@
           event.preventDefault();
           window.location.href=href;
         }
+      });
+    });
+  }
+
+  function initAboutDialog(){
+    if(dataset.page!=='dashboard') return;
+    const trigger=document.querySelector('[data-about-open]');
+    const dialog=document.getElementById('aboutDialog');
+    if(!(trigger instanceof HTMLElement)) return;
+    if(!(dialog instanceof HTMLDialogElement) || typeof dialog.showModal!=='function') return;
+
+    trigger.setAttribute('aria-haspopup','dialog');
+    trigger.setAttribute('aria-expanded','false');
+
+    const closeDialog=()=>{
+      if(dialog.open){
+        dialog.close();
+        window.setTimeout(()=>{
+          try{
+            trigger.focus({preventScroll:true});
+          }catch(error){
+            // focus errors can be ignored
+          }
+        },0);
+      }
+    };
+
+    const syncState=()=>{
+      trigger.setAttribute('aria-expanded',dialog.open?'true':'false');
+    };
+
+    trigger.addEventListener('click',()=>{
+      if(dialog.open){
+        closeDialog();
+        return;
+      }
+      dialog.showModal();
+      syncState();
+    });
+
+    dialog.addEventListener('cancel',event=>{
+      event.preventDefault();
+      closeDialog();
+      syncState();
+    });
+
+    dialog.addEventListener('close',syncState);
+
+    dialog.addEventListener('click',event=>{
+      if(event.target===dialog){
+        closeDialog();
+      }
+    });
+
+    dialog.querySelectorAll?.('[data-about-close]').forEach(btn=>{
+      btn.addEventListener('click',event=>{
+        event.preventDefault();
+        closeDialog();
       });
     });
   }
