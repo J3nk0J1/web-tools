@@ -243,7 +243,7 @@
 </style>
 </head>
 <body>
-  <center class="container" role="presentation" style="width:100%;background:${emailBg};padding:24px 16px;">
+  <center class="container" role="presentation" style="width:100%;background:${emailBg};padding:0 16px 32px;">
     <table role="presentation" class="content" align="center" style="margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
       <tr>
         <td style="background:${headerBg};padding:28px 24px;text-align:center;color:#ffffff;font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:24px;font-weight:700;letter-spacing:.3px;">
@@ -264,11 +264,11 @@
     if(!paragraphs.length) return '';
     const content=paragraphs.map((par,index)=>{
       const isLast=index===paragraphs.length-1;
-      const margin=isLast?'0':'0 0 16px';
+      const margin=isLast?'0':'0 0 18px';
       return `<p style="margin:${margin};font-size:15px;line-height:1.6;color:#3d3d45;">${escapeHtml(par)}</p>`;
     }).join('');
     return `<tr>
-      <td class="article-body" style="padding:28px 32px 20px;font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+      <td class="article-body" style="padding:32px 32px;font-family:Segoe UI,Helvetica,Arial,sans-serif;">
         ${content}
       </td>
     </tr>`;
@@ -291,8 +291,15 @@
     const titleMarkup=safeUrl ? `<a href="${escapeAttribute(safeUrl)}" style="color:${linkColour};text-decoration:none;font-weight:700;">${escapeHtml(safeTitle)}</a>` : `<span style="color:${linkColour};font-weight:700;">${escapeHtml(safeTitle)}</span>`;
     const summary=article.summary?.trim() ? `<p style="margin:8px 0 0;font-size:15px;line-height:1.6;color:#3d3d45;">${formatMultiline(article.summary.trim())}</p>` : '';
     const imageUrl=article.imageUrl?.trim();
+    const fallbackText=escapeHtml(article.imageAlt?.trim() || safeTitle);
     const imageCell=imageUrl ? `<td width="180" style="width:180px;padding:0 24px 0 0;vertical-align:top;" valign="top">
-          <img src="${escapeAttribute(imageUrl)}" alt="${escapeAttribute(article.imageAlt?.trim() || safeTitle)}" style="display:block;width:180px;max-width:100%;height:auto;border-radius:6px;" />
+          <div style="width:180px;max-width:100%;border-radius:6px;overflow:hidden;">
+            <img src="${escapeAttribute(imageUrl)}" alt="${fallbackText}" style="display:block;width:100%;height:auto;border-radius:6px;" referrerpolicy="no-referrer" onerror="this.style.display='none';var fallback=this.nextElementSibling;if(fallback) fallback.style.display='grid';" />
+            <div style="display:none;place-items:center;background:#f0f2f8;color:#3d3d45;font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;padding:12px;border-radius:6px;min-height:100px;text-align:center;">
+              <span style="display:block;">Image preview unavailable</span>
+              <span style="display:block;margin-top:6px;font-weight:400;">${fallbackText}</span>
+            </div>
+          </div>
         </td>` : '';
     const textCell=`<td width="100%" valign="top" style="width:100%;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#3d3d45;font-size:15px;line-height:1.6;padding:0;vertical-align:top;">
           <h3 style="margin:0;font-size:18px;line-height:1.4;">${titleMarkup}</h3>

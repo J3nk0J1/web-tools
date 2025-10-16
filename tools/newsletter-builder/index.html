@@ -15,7 +15,11 @@
     .newsletter-editor .field-row--thirds{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
     .newsletter-editor .field-row--halves{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
     .newsletter-editor .field label{font-weight:600;font-size:.9rem;color:var(--text)}
-    .newsletter-editor .input,.newsletter-editor textarea,.newsletter-editor select{background:color-mix(in oklab,var(--surface) 94%,transparent);border:1px solid var(--divider);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-1);font-size:.96rem;line-height:1.5}
+    .newsletter-editor .input,
+    .newsletter-editor textarea,
+    .newsletter-editor select{background:color-mix(in oklab,var(--surface) 94%,transparent);border:1px solid var(--divider);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-1);font-size:.96rem;line-height:1.5;color:var(--text);}
+    .newsletter-editor .input::placeholder,
+    .newsletter-editor textarea::placeholder{color:var(--text-muted);}
     .newsletter-editor textarea{min-height:110px;resize:vertical;padding:14px}
     .newsletter-meta{color:var(--text-muted);font-size:.9rem}
     .newsletter-articles{display:grid;gap:12px}
