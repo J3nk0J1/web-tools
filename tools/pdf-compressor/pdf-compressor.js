@@ -116,13 +116,19 @@
       const usedDpi=Math.round(appliedOptions.dpi||dpi);
       const usedQuality=(appliedOptions.quality||quality)*100;
       const usedMaxEdge=appliedOptions.downscale>0?`${appliedOptions.downscale}px`:'not limited';
-      stats.innerHTML=`
-        <div><strong>Input:</strong> ${currentFile.name} • ${formatBytes(originalBytes)}</div>
-        <div><strong>Output:</strong> ${outputName} • ${formatBytes(outputBytes)}</div>
-        <div><strong>Pages processed:</strong> ${pageCount}</div>
-        <div><strong>Settings:</strong> ${usedDpi} dpi rasterisation • JPEG quality ${usedQuality.toFixed(0)} • Max edge ${usedMaxEdge}</div>
-        <div><strong>Compression result:</strong> ${reductionText}</div>
-        <div><strong>Compliance:</strong> ${complianceLabel}</div>${sizeGuardApplied?'<div><strong>Note:</strong> Archival guard lowered DPI/quality automatically to prevent file bloat.</div>':''}`;
+      renderStatsSummary({
+        inputName: currentFile.name,
+        outputName,
+        originalBytes,
+        outputBytes,
+        pageCount,
+        usedDpi,
+        usedQuality,
+        usedMaxEdge,
+        reductionText,
+        complianceLabel,
+        sizeGuardApplied
+      });
       progressStatus.textContent='Ready to download.';
       clearError();
       requestAnimationFrame(()=>{ panelResults?.scrollIntoView({ behavior:'smooth', block:'start' }); });
@@ -311,6 +317,58 @@
   function deriveBaseName(name){
     const base=name.replace(/\.[^.]+$/,'');
     return base.replace(/[^A-Za-z0-9 _.-]+/g,'').trim().replace(/\s+/g,'-')||'document';
+  }
+
+  function renderStatsSummary(details){
+    if(!stats) return;
+    const {
+      inputName='document',
+      outputName='output.pdf',
+      originalBytes=0,
+      outputBytes=0,
+      pageCount=0,
+      usedDpi=0,
+      usedQuality=0,
+      usedMaxEdge='not limited',
+      reductionText='',
+      complianceLabel='',
+      sizeGuardApplied=false
+    }=details||{};
+
+    stats.textContent='';
+
+    const dpiDisplay=Number.isFinite(usedDpi)?Math.round(usedDpi):'—';
+    const qualityDisplay=Number.isFinite(usedQuality)?Math.round(usedQuality):'—';
+    const maxEdgeDisplay=usedMaxEdge||'not limited';
+    const rows=[
+      {label:'Input:', value:`${inputName||'document'} • ${formatBytes(originalBytes)}`},
+      {label:'Output:', value:`${outputName||'output.pdf'} • ${formatBytes(outputBytes)}`},
+      {label:'Pages processed:', value:String(pageCount ?? '0')},
+      {label:'Settings:', value:`${dpiDisplay} dpi rasterisation • JPEG quality ${qualityDisplay} • Max edge ${maxEdgeDisplay}`},
+      {label:'Compression result:', value:reductionText},
+      {label:'Compliance:', value:complianceLabel}
+    ];
+
+    const fragment=document.createDocumentFragment();
+    for(const row of rows){
+      const wrapper=document.createElement('div');
+      const strong=document.createElement('strong');
+      strong.textContent=row.label;
+      wrapper.appendChild(strong);
+      wrapper.appendChild(document.createTextNode(` ${row.value}`));
+      fragment.appendChild(wrapper);
+    }
+
+    if(sizeGuardApplied){
+      const note=document.createElement('div');
+      const label=document.createElement('strong');
+      label.textContent='Note:';
+      note.appendChild(label);
+      note.appendChild(document.createTextNode(' Archival guard lowered DPI/quality automatically to prevent file bloat.'));
+      fragment.appendChild(note);
+    }
+
+    stats.appendChild(fragment);
   }
 
   function triggerDownload(blob,filename){
