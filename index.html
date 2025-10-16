@@ -11,24 +11,26 @@
 </head>
 <body data-root="." data-page="dashboard">
   <header class="app-bar" role="banner">
-    <div class="app-bar__left">
-      <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-            <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
-          </svg>
-        </span>
-      </button>
-      <img src="./assets/icons/app-logo.svg" class="app-logo" alt="Tools logo" />
-      <div class="app-brand">
-        <span class="app-title">Intranet Tools</span>
-        <span class="app-subtitle">Creative suite for secure teams</span>
+    <div class="app-bar__content">
+      <div class="app-bar__left">
+        <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+            </svg>
+          </span>
+        </button>
+        <img src="./assets/icons/app-logo.svg" class="app-logo" alt="Tools logo" />
+        <div class="app-brand">
+          <span class="app-title">Intranet Tools</span>
+          <span class="app-subtitle">Creative suite for secure teams</span>
+        </div>
       </div>
-    </div>
-    <div class="app-bar__right">
-      <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
-        <span class="icon" id="themeIcon" aria-hidden="true"></span>
-      </button>
+      <div class="app-bar__right">
+        <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
+          <span class="icon" id="themeIcon" aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -44,21 +46,21 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero__grid">
         <div class="hero__stack">
-          <p class="hero__eyebrow">Toolsuite 3</p>
-          <h1 id="hero-title" class="hero__title">Material You workspace for secure, offline productivity</h1>
-          <p class="hero__subtitle">Launch media, document, and communication utilities without leaving the intranet. Everything is available offline with your preferred theme remembered.</p>
+          <p class="hero__eyebrow">Workspace hub</p>
+          <h1 id="hero-title" class="hero__title">Streamlined tools designed for secure, offline work</h1>
+          <p class="hero__subtitle">Access production-ready utilities without leaving the intranet. Launch files quickly, stay aligned with policy, and pick up where you left off in any theme.</p>
           <div class="hero__actions">
             <button class="btn" type="button" data-launcher-open data-ripple>Open launcher</button>
             <a class="btn btn--tonal" href="#tools-heading" data-ripple>Browse library</a>
           </div>
         </div>
         <article class="hero__supporting" aria-label="What’s included">
-          <h2 class="hero-card__title">Ready when you are</h2>
-          <p class="hero-card__text">Every tool is tuned for offline use, supports drag-and-drop, and respects workspace policies. Pick a workflow below or jump straight into a featured tool.</p>
+          <h2 class="hero-card__title">Ready when you sign in</h2>
+          <p class="hero-card__text">Every app is tuned for offline use, supports drag-and-drop, and respects workspace policies. Start with a featured workflow or jump right into the library.</p>
           <ul class="hero__highlight-list">
-            <li>• Smart media preparation &amp; compression</li>
-            <li>• Document conversion with archival presets</li>
-            <li>• Live previews that mirror production output</li>
+            <li>Smart media preparation &amp; compression</li>
+            <li>Document conversion with archival presets</li>
+            <li>Live previews that mirror production output</li>
           </ul>
         </article>
       </div>
