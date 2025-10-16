@@ -113,7 +113,7 @@
         </header>
         <p class="tool-card__description">${tool.description}</p>
         <footer class="tool-card__footer">
-          <span class="tool-card__hint">Offline ready</span>
+          <span class="tool-card__hint">Offline</span>
           <a class="btn btn--surface" data-ripple href="${tool.href}">Open</a>
         </footer>
       `;
@@ -421,7 +421,7 @@
         <span class="launcher-item__icon"><img src="${tool.icon}" alt="" aria-hidden="true" /></span>
         <span class="launcher-item__text">
           <span class="launcher-item__title">${tool.name}</span>
-          <span class="launcher-item__meta">${tool.category || 'Tool'} · Offline ready</span>
+          <span class="launcher-item__meta">${tool.category || 'Tool'} · Offline</span>
         </span>
         <span class="launcher-item__arrow" aria-hidden="true">→</span>
       `;

@@ -10,44 +10,51 @@
 </head>
 <body data-root="../.." data-page="tool">
   <header class="app-bar" role="banner">
-    <div class="app-bar__left">
-      <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-            <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
-          </svg>
-        </span>
-      </button>
-      <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        </span>
-      </button>
-      <img src="../../assets/icons/app-logo.svg" class="app-logo" alt="Intranet Tools logo" />
-      <div class="app-brand">
-        <span class="app-title">Intranet Tools</span>
-        <span class="app-subtitle">Creative suite for secure teams</span>
+    <div class="app-bar__content">
+      <div class="app-bar__left">
+        <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+            </svg>
+          </span>
+        </button>
+        <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </span>
+        </button>
+        <img src="../../assets/icons/app-logo.svg" class="app-logo" alt="Intranet Tools logo" />
+        <div class="app-brand">
+          <span class="app-title">Intranet Tools</span>
+          <span class="app-subtitle">Creative suite for secure teams</span>
+        </div>
       </div>
-    </div>
-    <div class="app-bar__right">
-      <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
-        <span class="icon" id="themeIcon" aria-hidden="true"></span>
-      </button>
+      <div class="app-bar__right">
+        <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
+          <span class="icon" id="themeIcon" aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
   </header>
 
+  <div class="global-notice notice-bar notice-bar--important" role="note" aria-live="polite">
+    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
+    <p class="global-notice__text">Important Notice: This tool is provided as is without warranty or support. Please do not contact the ICT service desk—no support will be offered.</p>
+  </div>
+
   <section class="tool-lede" data-tool-lede data-tool-id="video-compressor"></section>
 
-  <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
+  <div class="notice-bar notice-bar--inline" role="note" aria-live="polite">
     <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
     <div class="notice-bar__content">
-      <h2 class="notice-bar__title">Performance reminder</h2>
+      <p class="notice-bar__title">Performance reminder</p>
       <p class="notice-bar__text">Encoding large videos in the browser is CPU intensive. Keep the tab focused, plug in your device, and expect the process to take several minutes per clip.</p>
     </div>
-  </aside>
+  </div>
 
-  <main class="tool-content" role="main">
-    <section class="panel" aria-labelledby="upload-title">
+  <main class="tool-main" role="main">
+    <section class="tool-section" aria-labelledby="upload-title">
       <h2 id="upload-title">Step 1 — Pick a source video</h2>
       <div id="dropzone" class="dropzone" tabindex="0">
         <p>Drag & drop a video here, or</p>
@@ -57,7 +64,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="analysis-title" id="analysisPanel" hidden>
+    <section class="tool-section" aria-labelledby="analysis-title" id="analysisPanel" hidden>
       <h2 id="analysis-title">Step 2 — Automatic analysis</h2>
       <div class="analysis-grid">
         <div>
@@ -72,7 +79,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="settings-title" id="settingsPanel" hidden>
+    <section class="tool-section" aria-labelledby="settings-title" id="settingsPanel" hidden>
       <h2 id="settings-title">Step 3 — Output settings</h2>
       <div class="settings-grid">
         <div class="field">
@@ -167,7 +174,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="run-title" id="runPanel" hidden>
+    <section class="tool-section" aria-labelledby="run-title" id="runPanel" hidden>
       <h2 id="run-title">Step 4 — Compress</h2>
       <p class="hint">The encoder captures the video through the browser's MediaRecorder API. Close other heavy applications and keep the device awake.</p>
       <div class="actions">
@@ -183,7 +190,7 @@
       <output id="logOutput" class="log" role="status" aria-live="polite"></output>
     </section>
 
-    <section class="panel" aria-labelledby="result-title" id="resultPanel" hidden>
+    <section class="tool-section" aria-labelledby="result-title" id="resultPanel" hidden>
       <h2 id="result-title">Result</h2>
       <div class="results">
         <div class="stats" id="resultStats"></div>
