@@ -13,7 +13,7 @@ const tools = [
 test('dashboard lists available tools', async ({ page }) => {
   await page.goto('/index.html');
   await expect(page.locator('.app-title')).toHaveText('Intranet Tools');
-  await expect(page.locator('.card')).toHaveCount(tools.length);
+  await expect(page.locator('[data-tool-card]')).toHaveCount(tools.length);
 });
 
 for (const tool of tools) {
