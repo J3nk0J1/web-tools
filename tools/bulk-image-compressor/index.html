@@ -9,44 +9,43 @@
 </head>
 <body data-root="../.." data-page="tool">
   <header class="app-bar" role="banner">
-    <div class="app-bar__left">
-      <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-            <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
-          </svg>
-        </span>
-      </button>
-      <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        </span>
-      </button>
-      <img src="../../assets/icons/app-logo.svg" class="app-logo" alt="Intranet Tools logo" />
-      <div class="app-brand">
-        <span class="app-title">Intranet Tools</span>
-        <span class="app-subtitle">Creative suite for secure teams</span>
+    <div class="app-bar__content">
+      <div class="app-bar__left">
+        <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+            </svg>
+          </span>
+        </button>
+        <button id="backToDashboard" class="icon-btn back-btn" aria-label="Back to dashboard" title="Back to dashboard" data-ripple>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </span>
+        </button>
+        <img src="../../assets/icons/app-logo.svg" class="app-logo" alt="Intranet Tools logo" />
+        <div class="app-brand">
+          <span class="app-title">Intranet Tools</span>
+          <span class="app-subtitle">Creative suite for secure teams</span>
+        </div>
       </div>
-    </div>
-    <div class="app-bar__right">
-      <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
-        <span class="icon" id="themeIcon" aria-hidden="true"></span>
-      </button>
+      <div class="app-bar__right">
+        <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
+          <span class="icon" id="themeIcon" aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
   </header>
 
+  <div class="global-notice notice-bar notice-bar--important" role="note" aria-live="polite">
+    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
+    <p class="global-notice__text">Important Notice: This tool is provided as is without warranty or support. Please do not contact the ICT service desk—no support will be offered.</p>
+  </div>
+
   <section class="tool-lede" data-tool-lede data-tool-id="bulk-image-compressor"></section>
 
-  <aside class="notice-bar notice-bar--important" role="note" aria-live="polite">
-    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
-    <div class="notice-bar__content">
-      <h2 class="notice-bar__title">Before you begin</h2>
-      <p class="notice-bar__text">This tool is provided <em>as is</em> without warranty or support. Please do not contact the ICT service desk—<strong>no support will be offered</strong>.</p>
-    </div>
-  </aside>
-
-  <main class="tool-content" role="main">
-    <section class="panel" aria-labelledby="upload-title" id="panelUpload">
+  <main class="tool-main" role="main">
+    <section class="tool-section" aria-labelledby="upload-title" id="panelUpload">
       <h2 id="upload-title">Add your images</h2>
       <p class="meta">Select up to 10 images per batch. They stay on this device.</p>
       <div id="dropzone" class="dropzone" tabindex="0">
@@ -58,7 +57,7 @@
       <div id="statusMessage" class="status" role="status" aria-live="assertive" hidden></div>
     </section>
 
-    <section class="panel" aria-labelledby="settings-title" id="panelSettings">
+    <section class="tool-section" aria-labelledby="settings-title" id="panelSettings">
       <h2 id="settings-title">Compression settings</h2>
       <div class="settings-grid">
         <div class="field">
@@ -81,7 +80,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="results-title" id="panelResults" hidden>
+    <section class="tool-section" aria-labelledby="results-title" id="panelResults" hidden>
       <h2 id="results-title">Batch summary</h2>
       <p class="meta">Download links appear below once processing finishes. File names include the <code>-compressed</code> suffix.</p>
       <ul id="fileList" class="file-list" aria-live="polite"></ul>

@@ -35,51 +35,30 @@
     </div>
   </header>
 
-  <main class="container" role="main">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero__grid">
-        <div class="hero__stack">
-          <p class="hero__eyebrow">Workspace hub</p>
-          <h1 id="hero-title" class="hero__title">Streamlined tools designed for secure, offline work</h1>
-          <p class="hero__subtitle">Access production-ready utilities without leaving the intranet. Launch files quickly, stay aligned with policy, and pick up where you left off in any theme.</p>
-          <div class="hero__actions">
-            <button class="btn" type="button" data-launcher-open data-ripple>Open launcher</button>
-            <a class="btn btn--tonal" href="#tools-heading" data-ripple>Browse library</a>
-          </div>
-        </div>
-      </div>
-      <div class="hero__search-surface">
-        <div class="hero__search">
-          <label class="search-field" for="toolSearch">
-            <span class="search-field__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </span>
-            <input id="toolSearch" data-tool-search type="search" placeholder="Search tools by name or workflow" autocomplete="off" />
-          </label>
-          <p class="hero__count"><span data-tool-count>8 tools</span> available offline</p>
-        </div>
-        <div class="hero__filters" data-category-chips></div>
-      </div>
-    </section>
+  <div class="global-notice notice-bar notice-bar--important" role="note" aria-live="polite">
+    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
+    <p class="global-notice__text">Important Notice: This tool is provided as is without warranty or support. Please do not contact the ICT service desk—no support will be offered.</p>
+  </div>
 
-    <section class="tool-section" aria-labelledby="featured-heading">
-      <div class="section-heading">
-        <h2 id="featured-heading">Featured workflows</h2>
-        <p class="section-heading__meta">Hand-picked starting points for creative and communications teams.</p>
+  <main class="dashboard" role="main">
+    <header class="dashboard__header">
+      <div class="dashboard__titles">
+        <p class="dashboard__eyebrow">Tool library</p>
+        <h1 class="dashboard__title">Launch an intranet tool</h1>
       </div>
-      <div class="tool-carousel" data-featured-grid></div>
-    </section>
+      <div class="dashboard__actions">
+        <button class="btn" type="button" data-launcher-open data-ripple>Open launcher</button>
+        <span class="dashboard__count"><span data-tool-count>8 tools</span> available offline</span>
+      </div>
+    </header>
 
-    <section class="tool-section" aria-labelledby="tools-heading">
-      <div class="section-heading">
+    <section class="dashboard__body" aria-labelledby="tools-heading">
+      <header class="dashboard__section-header">
         <h2 id="tools-heading">Available tools</h2>
-        <p class="section-heading__meta">Browse everything or open the launcher for quick switching.</p>
-      </div>
+        <p class="dashboard__section-subtitle">Choose a tool below to begin working offline.</p>
+      </header>
       <div class="tool-grid" data-tool-grid></div>
-      <p class="empty-state" data-search-empty hidden>No tools match your search. Try a different keyword or clear the filter.</p>
+      <p class="empty-state" data-search-empty hidden>No tools match your filters right now. Try another option.</p>
     </section>
   </main>
 
