@@ -10,57 +10,78 @@
   <link rel="icon" href="./assets/icons/app-logo.svg" type="image/svg+xml" />
 </head>
 <body data-root="." data-page="dashboard">
-  <header class="app-bar" role="banner">
-    <div class="app-bar__content">
-      <div class="app-bar__left">
-        <button class="icon-btn" type="button" data-launcher-open aria-haspopup="dialog" aria-label="Open app launcher" title="Open app launcher" data-ripple>
+  <div class="app-shell">
+    <aside class="shell-sidebar" data-sidebar>
+      <div class="shell-sidebar__brand">
+        <img src="./assets/icons/app-logo.svg" alt="Intranet Tools logo" class="shell-sidebar__logo" />
+        <div class="shell-sidebar__meta">
+          <span class="shell-sidebar__title">Intranet Tools</span>
+          <span class="shell-sidebar__subtitle">Creative suite for secure teams</span>
+        </div>
+        <button class="icon-btn shell-sidebar__collapse" type="button" data-sidebar-toggle aria-controls="shellNav" aria-label="Collapse navigation" title="Collapse navigation" data-ripple>
           <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-              <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6" />
             </svg>
           </span>
         </button>
-        <img src="./assets/icons/app-logo.svg" class="app-logo" alt="Tools logo" />
-        <div class="app-brand">
-          <span class="app-title">Intranet Tools</span>
-          <span class="app-subtitle">Creative suite for secure teams</span>
-        </div>
       </div>
-      <div class="app-bar__right">
-        <button class="app-bar__about-btn" type="button" data-about-open data-ripple>About</button>
-        <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
-          <span class="icon" id="themeIcon" aria-hidden="true"></span>
-        </button>
+      <nav id="shellNav" class="shell-sidebar__nav" aria-label="Tool navigation">
+        <ul class="sidebar-list" data-sidebar-tool-list>
+          <li class="sidebar-list__placeholder">Loading tools…</li>
+        </ul>
+      </nav>
+    </aside>
+    <div class="shell-sidebar__overlay" data-sidebar-overlay></div>
+    <div class="shell-main">
+      <header class="app-bar" role="banner">
+        <div class="app-bar__content">
+          <div class="app-bar__left">
+            <button class="icon-btn sidebar-toggle" type="button" data-sidebar-toggle aria-haspopup="true" aria-expanded="false" aria-controls="shellNav" aria-label="Toggle navigation" title="Toggle navigation" data-ripple>
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </span>
+            </button>
+            <div class="app-brand">
+              <span class="app-title">Intranet Tools</span>
+              <span class="app-subtitle">Creative suite for secure teams</span>
+            </div>
+          </div>
+          <div class="app-bar__right">
+            <button class="app-bar__about-btn" type="button" data-about-open data-ripple>About</button>
+            <button id="themeToggle" class="icon-btn" aria-label="Toggle light or dark theme" title="Toggle theme" data-ripple>
+              <span class="icon" id="themeIcon" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="shell-content" id="overview">
+        <div class="global-notice notice-bar notice-bar--important" role="note" aria-live="polite">
+          <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
+          <p class="global-notice__text">Important Notice: This tool is provided as is without warranty or support. Please do not contact the ICT service desk—no support will be offered.</p>
+        </div>
+
+        <main class="dashboard" role="main">
+          <section class="dashboard__section" id="tools" aria-labelledby="tools-heading">
+            <header class="dashboard__section-header">
+              <div>
+                <h1 id="tools-heading">Tool library</h1>
+                <p class="dashboard__section-subtitle">Browse the available intranet tools.</p>
+              </div>
+              <div class="dashboard__actions">
+                <span class="dashboard__count">Currently listing <span data-tool-count>8 tools</span>.</span>
+              </div>
+            </header>
+            <div class="tool-grid" data-tool-grid></div>
+            <p class="empty-state" data-search-empty hidden>No tools match your filters right now. Try another option.</p>
+          </section>
+        </main>
       </div>
     </div>
-  </header>
-
-  <div class="global-notice notice-bar notice-bar--important" role="note" aria-live="polite">
-    <div class="notice-bar__icon" aria-hidden="true">⚠️</div>
-    <p class="global-notice__text">Important Notice: This tool is provided as is without warranty or support. Please do not contact the ICT service desk—no support will be offered.</p>
   </div>
-
-  <main class="dashboard" role="main">
-    <header class="dashboard__header">
-      <div class="dashboard__titles">
-        <p class="dashboard__eyebrow">Tool library</p>
-        <h1 class="dashboard__title">Launch an intranet tool</h1>
-      </div>
-      <div class="dashboard__actions">
-        <button class="btn" type="button" data-launcher-open data-ripple>Open launcher</button>
-        <span class="dashboard__count"><span data-tool-count>8 tools</span> available offline</span>
-      </div>
-    </header>
-
-    <section class="dashboard__body" aria-labelledby="tools-heading">
-      <header class="dashboard__section-header">
-        <h2 id="tools-heading">Available tools</h2>
-        <p class="dashboard__section-subtitle">Choose a tool below to begin working offline.</p>
-      </header>
-      <div class="tool-grid" data-tool-grid></div>
-      <p class="empty-state" data-search-empty hidden>No tools match your filters right now. Try another option.</p>
-    </section>
-  </main>
 
   <dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutDialogTitle">
     <form method="dialog" class="about-dialog__surface">
