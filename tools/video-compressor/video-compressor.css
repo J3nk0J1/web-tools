@@ -69,6 +69,32 @@
   gap: 6px;
 }
 
+.field__inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.field__inline .input {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.input--small {
+  max-width: 140px;
+}
+
+.unit {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.field .input[disabled] {
+  opacity: 0.6;
+}
+
 .meta-list--inline {
   display: grid;
   gap: 8px;

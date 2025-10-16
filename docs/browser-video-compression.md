@@ -5,6 +5,7 @@ This document outlines the design of the browser-native video compression workfl
 ## Goals
 
 - Keep outputs under 100&nbsp;MB by automatically tuning bitrate, resolution, and audio presence.
+- Provide advanced controls so power users can override bitrate, resolution, frame rate, and audio handling when automatic planning is not desired.
 - Prefer patent-unencumbered delivery (WebM/VP9) while still allowing MP4/H.264 when the browser exposes an encoder.
 - Avoid bundling binary assets such as WebAssembly encoders so the tool works within repository constraints.
 - Warn users when jobs will tie up the device for several minutes and prevent overloading thin clients.
@@ -14,15 +15,16 @@ This document outlines the design of the browser-native video compression workfl
 1. **MediaRecorder-first encoding**
    - The tool relies on the `MediaRecorder` API, capturing a `<canvas>` stream for video frames and adding the source video's audio track when available.
    - Chromium on Windows exposes VP9/VP8 encoders without extra licensing baggage. H.264/MP4 is surfaced only when `MediaRecorder.isTypeSupported("video/mp4;codecs=avc1.42E01E,mp4a.40.2")` returns true.
-2. **Dynamic scaling planner**
-   - After inspecting the source clip, the planner computes a target bitrate and evaluates bits-per-pixel. When the bitrate would fall below quality thresholds, the tool progressively downscales until the output can stay within the 100&nbsp;MB budget.
-   - The pipeline reserves 2–15% headroom depending on the user's "Quality bias" slider to avoid overshooting the size cap.
+2. **Dynamic scaling planner with manual overrides**
+   - After inspecting the source clip, the planner computes a target bitrate and evaluates bits-per-pixel. When the bitrate would fall below quality thresholds, the tool progressively downscales until the output can stay within the 100&nbsp;MB budget unless the user selects a preset or custom resolution.
+   - Users can now override the auto-selected bitrate, choose explicit output presets (360p–4K or custom), clamp frame rate, and force or mute audio tracks. The automatic pipeline still reserves 2–15% headroom via the "Quality bias" slider to avoid overshooting the size cap.
 3. **Real-time capture loop**
    - A hidden `<video>` element plays the original file. Each frame is drawn onto a `<canvas>` and fed into the recording stream at the detected frame rate (clamped between 12 and 60 fps).
    - Progress is estimated from `video.currentTime / video.duration`, so users see the encode advance even though MediaRecorder does not expose granular progress callbacks.
 4. **User experience safeguards**
    - The interface surfaces estimated encode time (roughly `max(duration × 1.4, size × 25 seconds)`), warns that the tab will be busy, and requires a confirmation prompt before starting.
    - Logs note capability fallbacks (e.g., when MP4 is unavailable or audio capture fails) and highlight the final space savings once recording completes.
+   - When browsers refuse to expose an audio track through `captureStream()`, the tool attempts a Web Audio bridge so the exported video retains sound whenever possible.
 
 ## Format Strategy
 
@@ -38,12 +40,11 @@ If the requested format is unsupported, the planner automatically falls back to 
 
 - **No Safari/Firefox support:** The tool targets Microsoft Edge and Chrome on Windows. Other browsers may lack MediaRecorder implementations or expose different codec sets.
 - **Real-time requirement:** MediaRecorder works in near real-time. Very large clips can take as long as their playback duration to process, and the tab must remain in the foreground.
-- **Audio capture quirks:** Some GPU/driver combinations block `HTMLVideoElement.captureStream()`. When this happens the tool proceeds with a muted output and alerts the user in the log.
+- **Audio capture quirks:** Some GPU/driver combinations block `HTMLVideoElement.captureStream()`. When this happens the tool attempts to reroute audio through the Web Audio API and logs whether the bridge succeeded; otherwise it proceeds with a muted output.
 - **Bitrate variance:** MediaRecorder performs its own rate control, so final files may land slightly above or below the requested size. The headroom slider mitigates most variance but cannot guarantee an exact byte ceiling.
 
 ## Future Enhancements
 
-- Offer preset buttons (e.g., 480p/720p) for faster user choices when bitrate-based planning is unnecessary.
-- Allow manual bitrate overrides for advanced users.
 - Persist previous choices in `localStorage` so thin clients retain preferred targets across sessions.
+- Add per-track audio filters (e.g., loudness normalisation) once MediaStream processors stabilise in Chromium.
 - Investigate automatic pausing when the tab loses focus to further protect constrained CPUs.
