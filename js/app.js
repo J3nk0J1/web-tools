@@ -1,4 +1,4 @@
-// app.js — shared UI behaviours, theme switching, launcher, and card hydration
+// app.js — shared UI behaviours, theme switching, and card hydration
 (function(){
   const root=document.documentElement;
   const body=document.body;
@@ -23,16 +23,16 @@
 
   const cardRegistry=new WeakSet();
   const rippleTargets=new WeakSet();
-  let launcherIsBuilt=false;
   let filterController=null;
 
+  initSidebar();
   initThemeToggle();
+  buildSidebarToolLinks(tools);
   buildToolGrid(tools);
   initToolSearch();
   buildFeaturedTools(tools);
   buildCategoryChips(tools);
   hydrateToolLede(tools);
-  initLauncher(tools);
   initCardNavigation();
   initAboutDialog();
   initRippleObserver();
@@ -90,6 +90,154 @@
     });
   }
 
+  function initSidebar(){
+    if(!body) return;
+    const sidebar=document.querySelector('[data-sidebar]');
+    const toggles=Array.from(document.querySelectorAll('[data-sidebar-toggle]'));
+    const overlay=document.querySelector('[data-sidebar-overlay]');
+    if(!sidebar || toggles.length===0){
+      body.dataset.sidebarCollapsed='false';
+      return;
+    }
+
+    const mq=window.matchMedia ? window.matchMedia('(max-width: 1024px)') : null;
+
+    const readStored=()=>{
+      try{
+        return localStorage.getItem('sidebar-collapsed');
+      }catch(error){
+        return null;
+      }
+    };
+
+    const writeStored=value=>{
+      try{
+        localStorage.setItem('sidebar-collapsed',value?'true':'false');
+      }catch(error){
+        /* noop */
+      }
+    };
+
+    const isMobile=()=>mq?mq.matches:false;
+
+    const syncAria=collapsed=>{
+      toggles.forEach(btn=>{
+        btn.setAttribute('aria-expanded',collapsed?'false':'true');
+      });
+    };
+
+    const applyState=(collapsed,{persist}={persist:!isMobile()})=>{
+      const next=collapsed?'true':'false';
+      body.dataset.sidebarCollapsed=next;
+      if(persist) writeStored(collapsed);
+      syncAria(collapsed);
+    };
+
+    const initial=(()=>{
+      if(isMobile()) return true;
+      const stored=readStored();
+      if(stored==null) return false;
+      return stored==='true';
+    })();
+
+    applyState(initial);
+
+    toggles.forEach(btn=>{
+      btn.addEventListener('click',event=>{
+        event.preventDefault();
+        const current=body.dataset.sidebarCollapsed==='true';
+        const persist=!isMobile();
+        applyState(!current,{persist});
+      });
+    });
+
+    if(overlay){
+      overlay.addEventListener('click',()=>{
+        applyState(true,{persist:false});
+      });
+    }
+
+    const handleMediaChange=event=>{
+      if(event.matches){
+        applyState(true,{persist:false});
+      }else{
+        const stored=readStored();
+        if(stored==null){
+          applyState(false);
+        }else{
+          applyState(stored==='true');
+        }
+      }
+    };
+
+    if(mq){
+      if(typeof mq.addEventListener==='function'){
+        mq.addEventListener('change',handleMediaChange);
+      }else if(typeof mq.addListener==='function'){
+        mq.addListener(handleMediaChange);
+      }
+    }
+  }
+
+  function buildSidebarToolLinks(toolset){
+    const list=document.querySelector('[data-sidebar-tool-list]');
+    if(!list) return;
+
+    list.innerHTML='';
+
+    const currentPage=dataset.page || '';
+    let currentPath=null;
+    try{
+      currentPath=new URL(window.location.href).pathname.replace(/\/+$/,'');
+    }catch(error){
+      currentPath=null;
+    }
+
+    const sorted=[...toolset].sort((a,b)=>{
+      return a.name.localeCompare(b.name,'en',{sensitivity:'base'});
+    });
+
+    sorted.forEach(tool=>{
+      const item=document.createElement('li');
+      item.className='sidebar-list__item';
+
+      const link=document.createElement('a');
+      link.className='sidebar-link';
+      link.href=tool.href;
+      link.setAttribute('data-ripple','');
+
+      const iconWrap=document.createElement('span');
+      iconWrap.className='sidebar-link__icon';
+      const icon=document.createElement('img');
+      icon.src=tool.icon;
+      icon.alt='';
+      icon.setAttribute('aria-hidden','true');
+      icon.loading='lazy';
+      iconWrap.appendChild(icon);
+
+      const label=document.createElement('span');
+      label.className='sidebar-link__label';
+      label.textContent=tool.name;
+
+      link.append(iconWrap,label);
+
+      if(currentPage==='tool' && currentPath){
+        try{
+          const targetPath=new URL(tool.href, window.location.href).pathname.replace(/\/+$/,'');
+          if(targetPath===currentPath){
+            link.classList.add('sidebar-link--active');
+            link.setAttribute('aria-current','page');
+          }
+        }catch(error){
+          /* ignore */
+        }
+      }
+
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+  }
+
   function buildToolGrid(toolset){
     const grid=document.querySelector('[data-tool-grid]');
     if(!grid || !toolset.length) return;
@@ -102,20 +250,17 @@
       card.setAttribute('data-tool-card','');
       card.setAttribute('data-card-link',tool.href);
       card.dataset.search=tool.search;
-       card.dataset.category=(tool.category||'tool').toLowerCase();
+      card.dataset.category=(tool.category||'tool').toLowerCase();
       card.innerHTML=`
         <header class="tool-card__header">
           <span class="tool-card__icon"><img src="${tool.icon}" alt="${tool.name} icon" loading="lazy" /></span>
           <div class="tool-card__meta">
-            <span class="badge badge--category">${tool.category || 'Tools'}</span>
             <h3 class="tool-card__title">${tool.name}</h3>
+            <p class="tool-card__category">${tool.category || 'Tool'}</p>
           </div>
         </header>
         <p class="tool-card__description">${tool.description}</p>
-        <footer class="tool-card__footer">
-          <span class="tool-card__hint">Offline</span>
-          <a class="btn btn--surface" data-ripple href="${tool.href}">Open</a>
-        </footer>
+        <a class="btn btn--surface tool-card__action" data-ripple href="${tool.href}">Open tool</a>
       `;
       fragment.appendChild(card);
     });
@@ -270,15 +415,12 @@
         <header class="tool-card__header">
           <span class="tool-card__icon"><img src="${tool.icon}" alt="${tool.name} icon" loading="lazy" /></span>
           <div class="tool-card__meta">
-            <span class="badge badge--category">${tool.category || 'Tools'}</span>
             <h3 class="tool-card__title">${tool.name}</h3>
+            <p class="tool-card__category">${tool.category || 'Tool'}</p>
           </div>
         </header>
         <p class="tool-card__description">${tool.description}</p>
-        <footer class="tool-card__footer">
-          <span class="tool-card__hint">Featured</span>
-          <a class="btn" data-ripple href="${tool.href}">Open</a>
-        </footer>
+        <a class="btn tool-card__action" data-ripple href="${tool.href}">Open tool</a>
       `;
       fragment.appendChild(card);
       cards.push(card);
@@ -354,171 +496,6 @@
     }else{
       syncActive({category:'all'});
     }
-  }
-
-  function initLauncher(toolset){
-    if(launcherIsBuilt) return;
-    const triggers=Array.from(document.querySelectorAll('[data-launcher-open]'));
-    if(!triggers.length || !toolset.length || !body) return;
-
-    const overlay=document.createElement('div');
-    overlay.className='app-launcher';
-    overlay.setAttribute('aria-hidden','true');
-    overlay.innerHTML=`
-      <div class="app-launcher__backdrop" data-launcher-close></div>
-      <div class="app-launcher__panel" role="dialog" aria-modal="true" aria-labelledby="launcherTitle" tabindex="-1">
-        <header class="app-launcher__header">
-          <h2 id="launcherTitle">Quick launcher</h2>
-          <button class="icon-btn" type="button" data-launcher-close aria-label="Close launcher" title="Close launcher" data-ripple>
-            <span class="icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M6 18 18 6"/></svg>
-            </span>
-          </button>
-        </header>
-        <div class="app-launcher__search">
-          <label class="search-field" for="launcherSearch">
-            <span class="search-field__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </span>
-            <input id="launcherSearch" data-launcher-search type="search" placeholder="Search tools" autocomplete="off" />
-          </label>
-        </div>
-        <div class="app-launcher__body">
-          <div class="app-launcher__list" data-launcher-list role="list"></div>
-          <p class="app-launcher__empty" data-launcher-empty hidden>No tools matched your search.</p>
-        </div>
-      </div>
-    `;
-
-    body.appendChild(overlay);
-    hydrateRipples(overlay);
-
-    const panel=overlay.querySelector('.app-launcher__panel');
-    const closeEls=overlay.querySelectorAll('[data-launcher-close]');
-    const searchInput=overlay.querySelector('[data-launcher-search]');
-    const list=overlay.querySelector('[data-launcher-list]');
-    const empty=overlay.querySelector('[data-launcher-empty]');
-    const backdrop=overlay.querySelector('.app-launcher__backdrop');
-
-    if(!panel || !list || !searchInput) return;
-
-    if(!panel.id){
-      panel.id='appLauncherPanel';
-    }
-    const panelId=panel.id;
-
-    toolset.forEach(tool=>{
-      const item=document.createElement('a');
-      item.className='launcher-item';
-      item.setAttribute('data-launcher-item','');
-      item.setAttribute('role','listitem');
-      item.href=tool.href;
-      item.dataset.search=tool.search;
-      item.innerHTML=`
-        <span class="launcher-item__icon"><img src="${tool.icon}" alt="" aria-hidden="true" /></span>
-        <span class="launcher-item__text">
-          <span class="launcher-item__title">${tool.name}</span>
-          <span class="launcher-item__meta">${tool.category || 'Tool'} · Offline</span>
-        </span>
-        <span class="launcher-item__arrow" aria-hidden="true">→</span>
-      `;
-      list.appendChild(item);
-    });
-
-    const trapFocus=event=>{
-      if(event.key!=='Tab') return;
-      const focusables=listFocusables(panel);
-      if(!focusables.length) return;
-      const first=focusables[0];
-      const last=focusables[focusables.length-1];
-      if(event.shiftKey){
-        if(document.activeElement===first){
-          event.preventDefault();
-          last.focus();
-        }
-      } else if(document.activeElement===last){
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    let lastFocus=null;
-
-    const openLauncher=()=>{
-      lastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
-      overlay.classList.add('is-open');
-      overlay.setAttribute('aria-hidden','false');
-      body?.classList.add('is-launcher-open');
-      searchInput.value='';
-      filterLauncher('');
-      window.setTimeout(()=>searchInput.focus(),50);
-      panel.addEventListener('keydown',trapFocus);
-      document.addEventListener('keydown',handleEscape,true);
-      triggers.forEach(trigger=>trigger.setAttribute('aria-expanded','true'));
-    };
-
-    const closeLauncher=()=>{
-      overlay.classList.remove('is-open');
-      overlay.setAttribute('aria-hidden','true');
-      body?.classList.remove('is-launcher-open');
-      panel.removeEventListener('keydown',trapFocus);
-      document.removeEventListener('keydown',handleEscape,true);
-      if(lastFocus && typeof lastFocus.focus==='function'){
-        window.setTimeout(()=>lastFocus.focus(),50);
-      }
-      triggers.forEach(trigger=>trigger.setAttribute('aria-expanded','false'));
-    };
-
-    const handleEscape=event=>{
-      if(event.key==='Escape'){
-        event.preventDefault();
-        closeLauncher();
-      }
-    };
-
-    const filterLauncher=term=>{
-      const value=(term||'').toLowerCase().trim();
-      let visible=0;
-      list.querySelectorAll('[data-launcher-item]').forEach(item=>{
-        const text=item.dataset.search || '';
-        const match=!value || text.includes(value);
-        item.hidden=!match;
-        if(match) visible+=1;
-      });
-      if(empty){
-        empty.hidden=visible!==0;
-      }
-    };
-
-    searchInput.addEventListener('input',()=>filterLauncher(searchInput.value));
-
-    closeEls.forEach(btn=>{
-      btn.addEventListener('click',closeLauncher);
-    });
-    backdrop?.addEventListener('click',closeLauncher);
-
-    triggers.forEach(trigger=>{
-      trigger.setAttribute('aria-controls',panelId);
-      trigger.setAttribute('aria-expanded','false');
-      trigger.addEventListener('click',openLauncher);
-      trigger.addEventListener('keydown',event=>{
-        if(event.key==='Enter' || event.key===' '){
-          event.preventDefault();
-          openLauncher();
-        }
-      });
-    });
-
-    launcherIsBuilt=true;
-  }
-
-  function listFocusables(container){
-    if(!container) return [];
-    const selectors=['a[href]','button:not([disabled])','input:not([disabled])','textarea:not([disabled])','select:not([disabled])','[tabindex]:not([tabindex="-1"])'];
-    return Array.from(container.querySelectorAll(selectors.join(','))).filter(el=>!el.hasAttribute('hidden'));
   }
 
   function initCardNavigation(scope=document){
